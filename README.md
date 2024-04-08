@@ -17,7 +17,7 @@ Computational results of CPLEX 20.1 verification for small-sized instances with 
 
 ![image-20240408153415772](README.assets/image-20240408153415772.png)
 
-where *m* denotes the vehicle number, *best* denotes the optimal objective values, *time* denotes the total run-time in seconds, *gap* is calculated as $\frac{best_{\text{in verification}}-best_{\text{in paper}}}{best_{\text{in paper}}}\times 100 \%$. 
+where *m* denotes the vehicle number, *best* denotes the optimal objective values, *time* denotes the total run-time in seconds, *gap* is calculated as $\frac{best_{\text{in verification}}-best_{\text{in paper}}}{best_{\text{in paper}}}\times 100$%. 
 
 CPLEX 20.1 verification conclusion: computational results in the EVRP-TW-SPD dataset generated using Akbay et al.'s (2022) approach **align with** those of the dataset actually used in the same paper, indicating the correctness of the EVRP-TW-SPD dataset generation.
 
