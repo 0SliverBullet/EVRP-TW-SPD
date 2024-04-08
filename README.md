@@ -5,7 +5,9 @@ We generate EVRP-TW-SPD dataset and CPLEX 20.1 verification.
 
 ## EVRP-TW-SPD dataset generation
 
-As states in the paper of Akbay et al (2022), EVRP-TW-SPD dataset is generated based on the EVRP-TW problem instances introduced by the paper titled *["The electric vehicle-routing problem with time windows and recharging stations"](https://doi.org/10.1287/trsc.2013.0490)* (Schneider et al, 2014),  where the delivery demand of each customer was separated into a delivery and a pickup demand by using the approach from the paper titled *["A cluster insertion heuristic for single and multiple depot vehicle routing problems with backhauling"](https://link.springer.com/article/10.1057/palgrave.jors.2600808)* (Salhi et al, 1999). EVRP-TW-SPD dataset instances generator is implemented in Python.
+As states in the paper of Akbay et al (2022), EVRP-TW-SPD dataset is generated based on the EVRP-TW problem instances introduced by the paper titled *["The electric vehicle-routing problem with time windows and recharging stations"](https://doi.org/10.1287/trsc.2013.0490)* (Schneider et al, 2014),  where the delivery demand of each customer was separated into a delivery and a pickup demand by using the approach from the paper titled *["A cluster insertion heuristic for single and multiple depot vehicle routing problems with backhauling"](https://link.springer.com/article/10.1057/palgrave.jors.2600808)* (Salhi et al, 1999). 
+
+EVRP-TW-SPD dataset instances generator is implemented in Python.
 
 ## CPLEX 20.1 verification
 
@@ -15,7 +17,7 @@ Computational results of CPLEX 20.1 verification for small-sized instances with 
 
 ![image-20240408153415772](README.assets/image-20240408153415772.png)
 
-where *m* denotes the vehicle number, *best* denotes the optimal objective values, *time* denotes the total run-time in seconds, *gap* is calculated as $\frac{best_{\text{in paper}}-best_{\text{in verification}}}{best_{\text{in paper}}}\times 100 \%$. 
+where *m* denotes the vehicle number, *best* denotes the optimal objective values, *time* denotes the total run-time in seconds, *gap* is calculated as $\frac{best_{\text{in verification}}-best_{\text{in paper}}}{best_{\text{in paper}}}\times 100 \%$. 
 
 CPLEX 20.1 verification conclusion: computational results in the EVRP-TW-SPD dataset generated using Akbay et al.'s (2022) approach **align with** those of the dataset actually used in the same paper, indicating the correctness of the EVRP-TW-SPD dataset generation.
 
