@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ASCII"?><project>
+	<version>1.0</version>
+	<configs>
+		<config default="true" name="config" category="opl">
+			<ref name="r102C10.dat" type="data">
+			</ref>
+			<ref name="EVRP-TW-SPD.mod" type="model">
+			</ref>
+			<ref name="EVRP-TW-SPD.ops" type="setting">
+			</ref>
+		</config>
+	</configs>
+	
+</project>
