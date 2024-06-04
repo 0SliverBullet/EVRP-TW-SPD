@@ -23,7 +23,7 @@ CPLEX 20.1 verification conclusion: computational results in the EVRP-TW-SPD dat
 
 ## $\color{red} {\text{Update: June 04, 2024}}$
 
-the original EVRP-TW-SPD Instances used in Akbay et al.'s (2022) can be seen in [https://github.com/manilakbay/EVRP-TW-SPD-Instanceso]https://github.com/manilakbay/EVRP-TW-SPD-Instances), which is updated on Apr 25. The difference between **the original EVRP-TW-SPD Instances** and **the generated EVRP-TW-SPD Instances** in this repository is that when calculating the delivery value, we reserve the float value , whereas the dataset used in the original paper of Akbay et al.'s (2022) automatically reserve the integer part (directly truncating the decimal part). We will delete this repository later soon.
+the original EVRP-TW-SPD Instances used in Akbay et al.'s (2022) can be seen in [https://github.com/manilakbay/EVRP-TW-SPD-Instanceso](https://github.com/manilakbay/EVRP-TW-SPD-Instances), which is updated on Apr 25. The difference between **the original EVRP-TW-SPD Instances** and **the generated EVRP-TW-SPD Instances** in this repository is that when calculating the delivery value, we reserve the float value , whereas the dataset used in the original paper of Akbay et al.'s (2022) automatically reserve the integer part (directly truncating the decimal part). We will delete this repository later soon.
 
 ## References
 
