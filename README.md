@@ -1,5 +1,5 @@
 # Hybrid Memetic Search for Electric Vehicle Routing with Time Windows, Simultaneous Pickup and Deliveries, and Partial Recharges
-The HMA source code and datasets used in the experiments will be released immediately once the paper is accepted.
+$\color{red} {\text{The HMA source code and datasets used in the experiments will be released immediately once the paper is accepted.}}$
 
 # EVRP-TW-SPD
 Dataset, CPLEX code of the Electric Vehicle Routing Problem with Time Windows, Simultaneous Pickup and Deliveries (EVRP-TW-SPD) based on the paper titled *["Application of CMSA to the Electric Vehicle Routing Problem with Time Windows, Simultaneous Pickup and Deliveries, and Partial Vehicle Charging"](https://doi.org/10.1007/978-3-031-26504-4_1)* (Akbay et al, 2022).
