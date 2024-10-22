@@ -14,7 +14,7 @@ EVRP-TW-SPD dataset instances generator is implemented in Python.
 
 ## CPLEX 20.1 verification
 
-To verify the correctness of EVRP-TW-SPD dataset generation, we give CPLEX code to compare its verification results with corresponding numerical results in the paper of Akbay et al (2022). For simplicity, this CPLEX code is based on [https://github.com/0SliverBullet/E-VRPTW](https://github.com/0SliverBullet/E-VRPTW), where we **set three copies as dummy vertex** for each charging station in .dat files. Verification was performed on a Personal Computer with 11th Gen Intel (R) Core (TM) i5-1135G7 CPU with 8 cores of 2.40GHz and a minimum of 16 GB RAM. CPLEX version 20.1 was used in one-threaded mode, the same as the configuration in the paper of Akbay et al (2022).
+To verify the correctness of EVRP-TW-SPD dataset generation, we give CPLEX code to compare its verification results with corresponding numerical results in the paper of Akbay et al. (2022). For simplicity, this CPLEX code is based on [https://github.com/0SliverBullet/E-VRPTW](https://github.com/0SliverBullet/E-VRPTW), where we **set three copies as dummy vertex** for each charging station in .dat files. Verification was performed on a Personal Computer with 11th Gen Intel (R) Core (TM) i5-1135G7 CPU with 8 cores of 2.40GHz and a minimum of 16 GB RAM. CPLEX version 20.1 was used in one-threaded mode, the same as the configuration in the paper of Akbay et al. (2022).
 
 Computational results of CPLEX 20.1 verification for small-sized instances with 5 customers are shown as follows:
 
@@ -30,7 +30,7 @@ The original EVRP-TW-SPD Instances used in Akbay et al. (2022) can be seen in [h
 
 ## $\color{red} {\text{Update: October 22, 2024}}$
 
-We will upload the HMA source code along with the datasets: the _akb_set used in Akbay et al. (2022) and the _jd_set, which we generated.
+We will upload the HMA source code along with the datasets: the *akb* set used in Akbay et al. (2022) and the *jd* set, which we generated.
 
 ## References
 
