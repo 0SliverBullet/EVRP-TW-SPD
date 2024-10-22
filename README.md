@@ -1,14 +1,14 @@
-# Hybrid Memetic Search for Electric Vehicle Routing with Time Windows, Simultaneous Pickup and Deliveries, and Partial Recharges
+# Hybrid Memetic Search for Electric Vehicle Routing with Time Windows, Simultaneous Pickup-Delivery, and Partial Recharges
 $\color{red} {\text{The HMA source code and datasets used in the experiments will be released immediately once the paper is accepted.}}$
 
 # EVRP-TW-SPD
 Dataset, CPLEX code of the Electric Vehicle Routing Problem with Time Windows, Simultaneous Pickup and Deliveries (EVRP-TW-SPD) based on the paper titled *["Application of CMSA to the Electric Vehicle Routing Problem with Time Windows, Simultaneous Pickup and Deliveries, and Partial Vehicle Charging"](https://doi.org/10.1007/978-3-031-26504-4_1)* (Akbay et al, 2022).
 
-We generate EVRP-TW-SPD dataset and CPLEX 20.1 verification.
+We generate the EVRP-TW-SPD dataset and CPLEX 20.1 verification.
 
 ## EVRP-TW-SPD dataset generation
 
-As stated in the paper of Akbay et al (2022), EVRP-TW-SPD dataset is generated based on the EVRP-TW problem instances introduced by the paper titled *["The electric vehicle-routing problem with time windows and recharging stations"](https://doi.org/10.1287/trsc.2013.0490)* (Schneider et al, 2014),  where the delivery demand of each customer was separated into a delivery and a pickup demand by using the approach from the paper titled *["A cluster insertion heuristic for single and multiple depot vehicle routing problems with backhauling"](https://link.springer.com/article/10.1057/palgrave.jors.2600808)* (Salhi et al, 1999). 
+As stated in the paper of Akbay et al. (2022), the EVRP-TW-SPD dataset is generated based on the EVRP-TW problem instances introduced by the paper titled *["The electric vehicle-routing problem with time windows and recharging stations"](https://doi.org/10.1287/trsc.2013.0490)* (Schneider et al., 2014),  where the delivery demand of each customer was separated into a delivery and a pickup demand by using the approach from the paper titled *["A cluster insertion heuristic for single and multiple depot vehicle routing problems with backhauling"](https://link.springer.com/article/10.1057/palgrave.jors.2600808)* (Salhi et al., 1999). 
 
 EVRP-TW-SPD dataset instances generator is implemented in Python.
 
@@ -26,7 +26,11 @@ CPLEX 20.1 verification conclusion: computational results in the EVRP-TW-SPD dat
 
 ## $\color{red} {\text{Update: June 04, 2024}}$
 
-the original EVRP-TW-SPD Instances used in Akbay et al.'s (2022) can be seen in [https://github.com/manilakbay/EVRP-TW-SPD-Instances](https://github.com/manilakbay/EVRP-TW-SPD-Instances), which is updated on Apr 25. The difference between **the original EVRP-TW-SPD Instances** and **the generated EVRP-TW-SPD Instances** in this repository is that when calculating the delivery value, we reserve the float value , whereas the dataset used in the original paper of Akbay et al.'s (2022) automatically reserve the integer part (directly truncating the decimal part). We will delete this repository later soon.
+The original EVRP-TW-SPD Instances used in Akbay et al. (2022) can be seen in [https://github.com/manilakbay/EVRP-TW-SPD-Instances](https://github.com/manilakbay/EVRP-TW-SPD-Instances), which is updated on Apr 25. The difference between **the original EVRP-TW-SPD Instances** and **the generated EVRP-TW-SPD Instances** in this repository is that when calculating the delivery value, we reserve the float value. In contrast, the dataset used in the original paper of Akbay et al. (2022) automatically reserves the integer part (directly truncating the decimal part). 
+
+## $\color{red} {\text{Update: October 22, 2024}}$
+
+We will upload the HMA source code along with the datasets: the _akb_set used in Akbay et al. (2022) and the _jd_set, which we generated.
 
 ## References
 
