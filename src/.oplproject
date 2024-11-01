@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ASCII"?><project>
+	<version>1.0</version>
+	<configs>
+		<config default="true" name="config" category="opl">
+			<ref name="EVRP-TW-SPD.mod" type="model">
+			</ref>
+			<ref name="EVRP-TW-SPD.ops" type="setting">
+			</ref>
+			<ref name="cplex_evrptwspd/small_instances/Cplex5er/c101C5.dat" type="data">
+			</ref>
+		</config>
+	</configs>
+	
+</project>
