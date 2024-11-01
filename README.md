@@ -1,6 +1,3 @@
-# Hybrid Memetic Search for Electric Vehicle Routing with Time Windows, Simultaneous Pickup-Delivery, and Partial Recharges
-$\color{red} {\text{The HMA source code and datasets used in the experiments will be released immediately once the paper is accepted.}}$
-
 # EVRP-TW-SPD
 Dataset, CPLEX code of the Electric Vehicle Routing Problem with Time Windows, Simultaneous Pickup and Deliveries (EVRP-TW-SPD) based on the paper titled *["Application of CMSA to the Electric Vehicle Routing Problem with Time Windows, Simultaneous Pickup and Deliveries, and Partial Vehicle Charging"](https://doi.org/10.1007/978-3-031-26504-4_1)* (Akbay et al, 2022).
 
@@ -27,10 +24,7 @@ CPLEX 20.1 verification conclusion: computational results in the EVRP-TW-SPD dat
 ## $\color{red} {\text{Update: June 04, 2024}}$
 
 The original EVRP-TW-SPD Instances used in Akbay et al. (2022) can be seen in [https://github.com/manilakbay/EVRP-TW-SPD-Instances](https://github.com/manilakbay/EVRP-TW-SPD-Instances), which is updated on Apr 25. The difference between **the original EVRP-TW-SPD Instances** and **the generated EVRP-TW-SPD Instances** in this repository is that when calculating the delivery value, we reserve the float value. In contrast, the dataset used in the original paper of Akbay et al. (2022) automatically reserves the integer part (directly truncating the decimal part). 
-
-## $\color{red} {\text{Update: October 22, 2024}}$
-
-We will upload the HMA source code along with the datasets: the *akb* set used in Akbay et al. (2022) and the *jd* set, which we generated.
+**We will update this repository to ensure that the numerical precision for both delivery and pickup values aligns with those used in Akbay et al. (2022), if time permits later.** 
 
 ## References
 
