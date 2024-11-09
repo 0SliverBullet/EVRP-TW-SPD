@@ -202,7 +202,7 @@ Experiments were performed on a personal computer with an 11th Gen IntelÂ® Coreâ
     </tr>
 </table>
 
-where *m* denotes the vehicle number, *best* denotes the optimal objective values, *time* denotes the total run-time in seconds, *gap* is calculated as $\frac{best_{\text{in verification}}-best_{\text{in paper}}}{best_{\text{in paper}}}\times 100$%. 
+where *m* denotes the vehicle number, *best* represents the optimal objective values, *time* indicates the total runtime in seconds, and *gap* is calculated as $\frac{best_{\text{in verification}} - best_{\text{in paper}}}{best_{\text{in paper}}} \times 100%$.
 
 #### CPLEX 20.1 verification conclusion
 
