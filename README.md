@@ -204,6 +204,7 @@ Experiments were performed on a personal computer with an 11th Gen IntelÂ® Coreâ
 
 where *m* denotes the vehicle number, *best* represents the optimal objective values, *time* indicates the total runtime in seconds, and *gap* is calculated as $\frac{best_{\text{in verification}} - best_{\text{in paper}}}{best_{\text{in paper}}} \times 100%$.
 
+
 #### CPLEX 20.1 verification conclusion
 
 The computational results for the EVRP-TW-SPD dataset in our repository **align with** those from the dataset officially used in the paper by Akbay et al. (2022), except for the running times in CPLEX (due to different `.ops` files and running machines), indicating the correctness of the EVRP-TW-SPD dataset generation.
