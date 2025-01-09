@@ -499,6 +499,17 @@ Data::Data(ArgumentParser &parser)
     if (parser.exists("time"))
         this->tmax = std::stoi(parser.retrieve<std::string>("time"));
     printf("Time limit: %d seconds\n", this->tmax);
+    /*
+    - cpu_time_limit:
+        \in {150, 900}, default: 150
+        CPU time limit for Adapt-CMSA-STD to solve a certain instance 
+            - small-scale instance: 150 seconds
+            - medium-scale instance: 900 seconds 
+            - large-scale instance:
+                - small time limit: 1800 etc.
+                - large time limit: 3600 etc.
+        (**Note that in HMA, cpu_time_limit for small- and medium-scale  \in {105, 630}**)
+    */
 
     if (parser.exists("runs"))
         this->runs = std::stoi(parser.retrieve<std::string>("runs"));
@@ -507,6 +518,56 @@ Data::Data(ArgumentParser &parser)
     if (parser.exists("g_1"))
         this->g_1 = std::stoi(parser.retrieve<std::string>("g_1"));
     printf("g_1: %d\n", this->g_1);
+
+    printf("---------- Adapt-CMSA-STD Parameters Begin ---------- \n");
+    if (parser.exists("t_prop"))
+        this->t_prop = std::stod(parser.retrieve<std::string>("t_prop"));
+    printf("    t_prop        : %.2lf\n", this->t_prop);
+
+    if (parser.exists("t_ILP"))
+        this->t_ILP = std::stod(parser.retrieve<std::string>("t_ILP"));
+    printf("    t_ILP         : %.2lf\n", this->t_ILP);
+
+    if (parser.exists("alpha_LB"))
+        this->alpha_LB = std::stod(parser.retrieve<std::string>("alpha_LB"));
+    printf("    alpha_LB      : %.2lf\n", this->alpha_LB);
+
+    if (parser.exists("alpha_UB"))
+        this->alpha_UB = std::stod(parser.retrieve<std::string>("alpha_UB"));
+    printf("    alpha_UB      : %.2lf\n", this->alpha_UB);
+
+    if (parser.exists("alpha_red"))
+        this->alpha_red = std::stod(parser.retrieve<std::string>("alpha_red"));
+    printf("    alpha_red     : %.2lf\n", this->alpha_red);
+
+    if (parser.exists("d_rate"))
+        this->d_rate = std::stod(parser.retrieve<std::string>("d_rate"));
+    printf("    d_rate        : %.2lf\n", this->d_rate);
+
+    if (parser.exists("h_rate"))
+        this->h_rate = std::stod(parser.retrieve<std::string>("h_rate"));
+    printf("    h_rate        : %.2lf\n", this->h_rate);
+
+    if (parser.exists("n_a"))
+        this->n_a = std::stoi(parser.retrieve<std::string>("n_a"));
+    printf("    n_a           : %d\n", this->n_a);
+
+    if (parser.exists("l_size"))
+        this->l_size = std::stoi(parser.retrieve<std::string>("l_size"));
+    printf("    l_size        : %d\n", this->l_size);
+
+    if (parser.exists("delta_n"))
+        this->delta_n = std::stoi(parser.retrieve<std::string>("delta_n"));
+    printf("    delta_n       : %d\n", this->delta_n);
+
+    if (parser.exists("delta_l_size"))
+        this->delta_l_size = std::stoi(parser.retrieve<std::string>("delta_l_size"));
+    printf("    delta_l_size  : %d\n", this->delta_l_size);
+
+    if (parser.exists("dummy_stations"))
+        this->dummy_stations = std::stoi(parser.retrieve<std::string>("dummy_stations"));
+    printf("    dummy_stations: %d\n", this->dummy_stations);
+    printf("---------- Adapt-CMSA-STD Parameters End   ---------- \n");
 
     if (parser.exists("O_1_eval"))
     {
@@ -583,14 +644,15 @@ Data::Data(ArgumentParser &parser)
     }
     this->pre_processing();
 
-    for (int i = 0; i < this->node_num; i++){
-        for (int j = 0; j < this->node_num; j++){
-            printf("%.2lf ", this->dist[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-    exit(0);
+    // print dummy station 
+    // for (int i = 0; i < this->node_num; i++){
+    //     for (int j = 0; j < this->node_num; j++){
+    //         printf("%.2lf ", this->dist[i][j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+    // exit(0);
 }
 
 void Data::pre_processing()

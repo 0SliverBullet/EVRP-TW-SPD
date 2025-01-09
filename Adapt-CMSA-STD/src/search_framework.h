@@ -18,29 +18,15 @@
 using namespace std;
 
 void Adapt_CMSA_STD(Data &data, Solution &s);
-void AdaptCMSA(
-    int dimension, 
-    double t_prop, 
-    double t_ILP, 
-    double alpha_LB, 
-    double alpha_UB, 
-    double alpha_red, 
-    double d_rate, 
-    double h_rate, 
-    int n_a = 1, 
-    int l_size = 100, 
-    double gamma = 0.1, 
-    int delta_n = 1, 
-    int delta_l_size = 20, 
-    double delta_gamma = 0.1, 
-    double infeasible_rate = 0.22, 
-    double cpu_time_limit = 150
-);
-std::vector<std::vector<int>> GenerateGreedySolution();
-std::vector<std::vector<int>> ProbabilisticSolutionConstruction(const std::vector<std::vector<int>>& s_bsf, double alpha_bsf, int l_size, double d_rate, double h_rate, double infeasible_rate);
-std::vector<std::vector<int>> Merge(const std::vector<std::vector<int>>& C, const std::vector<std::vector<int>>& S);
-void AddRandomEdges(std::vector<std::vector<int>>& C, double gamma);
-std::pair<std::vector<std::vector<int>>, double> SolveSubinstance(const std::vector<std::vector<int>>& C, double t_ILP);
-void Initialize(int& n_a, int& l_size, double& gamma);
-void Increment(int& n_a, int& l_size, double& gamma);
-void LocalSearch(std::vector<std::vector<int>>& s, int id);
+void GenerateGreedySolution(Solution &s);
+void ProbabilisticSolutionConstruction(Solution &s, Solution &s_bsf, double alpha_bsf, int l_size, Data &data);
+void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<int>>& adjMatrix2, int numNodes);
+void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data);
+void Initialize(int& n_a, int& l_size, Data& data);
+void Increment(int& n_a, int& l_size, Data& data);
+void LocalSearch(Solution &s, int id);
+
+static inline bool termination(int no_improve, Data &data)
+{
+    return (no_improve > data.g_1);
+}

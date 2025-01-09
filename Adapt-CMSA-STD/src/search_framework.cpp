@@ -1,5 +1,13 @@
 #include"search_framework.h"
-
+extern clock_t find_best_time;
+extern clock_t find_bks_time;
+extern int find_best_run;
+extern int find_best_gen;
+extern int find_bks_run;
+extern int find_bks_gen;
+extern bool find_better;
+extern long call_count_move_eval;
+extern long mean_duration_move_eval;
 // grobal varivales
 int dim;
 int n_init;
@@ -9,175 +17,206 @@ int l_size_inc;
 double gamma_init;
 double gamma_inc;
 
-void Adapt_CMSA_STD(Data &data, Solution &s){
-    // TODO
-}
-
 /*
-*************************** Main Adapt-CMSA-STD function ***************************  
-    a self-adapted CMSA algorithm for EVRP-TW-SPD (CMSA: construct, merge, solve & adapt)
-
-    construct:
-        ProbabilisticSolutionConstruction()
-    merge:
-        Merge() 
-        AddRandomEdges()
-    solve:
-        SolveSubinstance()
-    adapt:
-        the dynamic change of parameters alpha_bsf, n_a, l_size, gamma 
-
-    Parameters
-        - dimsension:
-            solution dimemsion, i.e., s_bsf is a (dim, dim) matrix.
-        - t_prop: 
-            \in [0.1, 0.8], default: 0.44
-            a proportion, \in (0, 1)
-        - t_ILP: 
-            \in {5, 7, 10, 15, 20, 25, 30, 35, 40}, default: 20
-            the maximally possible computation time in CPLEX
-            i.e., the CPU time limit for the application of CPLEX to solve the ILP model  
-        - alpha_LB: 
-            \in [0.6, 0.99], default: 0.62
-            a lower bound for alpha_bsf
-        - alpha_UB: 
-            \in [0.6, 0.99], default: 0.76
-            an upper bound for alpha_bsf
-        - alpha_red: 
-            \in [0.01, 0.1], default: 0.06
-            the step size (learning/self-adaptive rate) for the reduction of alpha_bsf
-        - [ ] d_rate:
-            \in [0, 1], default: 0.17
-            the probability of performing a step during solution construction deterministically. 
-            i.e., determinism rate for solution construction
-        - h_rate: 
-            \in [0, 1], default: 0.2
-            the probability to choose 
-                - the C&W savings heuristic (h_rate)
-                - the insertion heuristic (1 - h_rate)
-            as solution construction mechanism. 
-        - n_a:
-            \in {1, 2, 3, 4, 5}, default: 1 
-            a number of n_a solutions are probabilistically constructed in ProbabilisticSolutionConstruction()
-        - [ ] l_size:
-            \in {10, 15, 20, 50, 100, 200}, default: 100
-            controls the number of considered options (perturb operators?) at each solution construction step.
-            a higher value of l_size results in more diverse solutions which, in turn, leads to a larger sub-instance
-            i.e., initial list size value
-        - gamma:
-            \in (0, 1), default: 0.1
-            randomly add gamma·|V'_{0,N+1}| additional edges/options to the current sub-instance in AddRandomEdges(C, gamma)
-        - delta_n:
-            default: 1
-        - delta_l_size:
-            \in {10, 15, 20, 50, 100, 200}, default: 20
-            list size increment
-        - delta_gamma:
-            default: 0.1
-        - infeasible_rate:
-            \in [0, 1], default: 0.22
-            probability to choose infeasible construction
-        - cpu_time_limit:
-            \in {150, 900}, default: 150
-            CPU time limit for Adapt-CMSA-STD to solve a certain instance 
-                - small-scale instance: 150 seconds
-                - medium-scale instance: 900 seconds 
-                - large-scale instance:
-                    - small time limit: 1800 etc.
-                    - large time limit: 3600 etc.
-            (**Note that in HMA, cpu_time_limit for small- and medium-scale  \in {105, 630}**)
+*************************** Main Adapt-CMSA-STD Function ***************************  
+    a self-adapted CMSA algorithm for EVRP-TW-SPD 
+    CMSA: construct, merge, solve & adapt
 */
-void AdaptCMSA(
-    int dimension, 
-    double t_prop, 
-    double t_ILP, 
-    double alpha_LB, 
-    double alpha_UB, 
-    double alpha_red, 
-    double d_rate, 
-    double h_rate, 
-    int n_a, 
-    int l_size, 
-    double gamma, 
-    int delta_n, 
-    int delta_l_size, 
-    double delta_gamma, 
-    double infeasible_rate, 
-    double cpu_time_limit
-) {
-    
-    dim = dimension;
-    n_init = n_a;
-    l_size_init = l_size;
-    gamma = gamma_init;
-    n_inc = delta_n;
-    l_size_inc = delta_l_size;
-    gamma_inc = delta_gamma;
+void Adapt_CMSA_STD(Data &data, Solution &s_bsf){
+    // TODO
+    double cost_all_run = 0.0; 
+    double time_all_run = 0.0;
+    vector<double> solutions;
+    vector<double> times;
 
-    std::vector<std::vector<int>> s_bsf = GenerateGreedySolution();
-    double alpha_bsf = alpha_UB; // solutions constructed with a high value of alpha_bsf will be rather similar to s_bsf
-    Initialize(n_a, l_size, gamma);
+    double t_prop = data.t_prop; // a proportion
+    double t_ILP = data.t_ILP; // the CPU time limit for the application of CPLEX to solve the ILP model  
+    double alpha_LB = data.alpha_LB; // a lower bound for alpha_bsf
+    double alpha_UB = data.alpha_UB; // an upper bound for alpha_bsf
+    double alpha_red = data.alpha_red; // the step size (learning/self-adaptive rate) for the reduction of alpha_bsf
+    double alpha_bsf = data.alpha_UB; 
+    double d_rate = data.d_rate; // the probability of performing a step during solution construction deterministically. 
+    double h_rate = data.h_rate; // the probability to choose - the C&W savings heuristic (h_rate) - the insertion heuristic (1 - h_rate) as solution construction mechanism. 
+    int n_a = data.n_a; // a number of n_a solutions are probabilistically constructed
+    int l_size = data.l_size; // controls the number of considered options (perturb operators?) at each solution construction step.
 
-    auto start_time = std::chrono::high_resolution_clock::now();
+    int numNodes = data.node_num + 1; // add "1" more since CPLEX need return depot 
+    std::vector<std::vector<int>> adjMatrix;
+    adjMatrix.resize(numNodes, std::vector<int>(numNodes, 0)); 
+    std::vector<std::vector<int>> adjMatrix_s;
+    adjMatrix_s.resize(numNodes, std::vector<int>(numNodes, 0)); 
 
-    while (true) {
-        auto current_time = std::chrono::high_resolution_clock::now();
-        double elapsed_time = std::chrono::duration<double>(current_time - start_time).count();
-        if (elapsed_time >= cpu_time_limit) break;
+    /* --- main body --- */
+    bool time_exhausted = false;
+    int run = 1;
+    for (; run <= data.runs; run++)
+    {
+        
+        /* ------------------------------ */
 
-        std::vector<std::vector<int>> C = s_bsf;
+        GenerateGreedySolution(s_bsf);
+        alpha_bsf = data.alpha_UB;
+        Initialize(n_a, l_size, data);
 
-        for (int i = 0; i < n_a; ++i) {
-            std::vector<std::vector<int>> S = ProbabilisticSolutionConstruction(s_bsf, alpha_bsf, l_size, d_rate, h_rate, infeasible_rate);
-            LocalSearch(S, 1);
-            C = Merge(C, S);
-        }
+        /* ------------------------------ */
 
-        AddRandomEdges(C, gamma);
-        // it seems that this function should be removed
+        clock_t stime = clock();
+        clock_t used = 0;
+        double used_sec = 0.0;
+        int no_improve = 0;
+        int iter = 0;
 
-        std::pair<std::vector<std::vector<int>>, double> result = SolveSubinstance(C, t_ILP);
-        std::vector<std::vector<int>> s_cplex = result.first;
-        double t_solve = result.second;
-        /*
-        t_solve: the required computation time in CPLEX
-        t_prop: a proportion, \in (0, 1)
-        */
-        LocalSearch(s_cplex, 2);
+        while (!termination(no_improve, data))
+        {
+            iter++;
+            no_improve++;
 
-        if (t_solve < t_prop * t_ILP && alpha_bsf > alpha_LB) {
-            alpha_bsf -= alpha_red;
-        }
-        /*
-        If sub-instance can be solved in a computation time 
-            - t_solve < t_prop \times t_ILP, 
-            - alpha_bsf > alpha_LB
-        alphe_bsf is reduced by alpha_red 
-            - solutions constructed with a lower value of alpha_bsf will be rather different to s_bsf
-        */
+            /* ------------------------------ */
+            adjMatrix.assign(numNodes, std::vector<int>(numNodes, 0));
+            s_bsf.adjMatrixRepresentation(adjMatrix, numNodes);
 
-        if ( true /* fitness of s_cplex < fitness of s_bsf */) {      // solution in CPLEX is strictly better 
-            s_bsf = s_cplex;
-            Initialize(n_a, l_size, gamma);          // reset
-        } else {
-            if ( true /* fitness of s_cplex >  fitness of s_bsf */) {  // solution in CPLEX is strictly worse
-                if (n_a == n_init) {
-                    alpha_bsf = std::min(alpha_bsf + alpha_red / 10.0, alpha_UB);  // enlarge alpha_bsf
-                } 
-                else {
-                    Initialize(n_a, l_size, gamma);  // reset
-                }
-            } 
-            else {                                                   // solution in CPLEX is exactly the same
-                Increment(n_a, l_size, gamma);       // increment
+            for (int i = 0; i < n_a; ++i) {
+                Solution s;
+                ProbabilisticSolutionConstruction(s, s_bsf, alpha_bsf, l_size, data);
+
+                LocalSearch(s, 1);
+
+                adjMatrix_s.assign(numNodes, std::vector<int>(numNodes, 0));
+                s.adjMatrixRepresentation(adjMatrix_s, numNodes);
+                Merge(adjMatrix, adjMatrix_s, numNodes);
             }
-        }
+            
+            Solution s_cplex;
+            double t_solve = 0.0;
+
+            SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
+
+            LocalSearch(s_cplex, 2);
+
+            /* Adapt: alpha_bsf, n_a, l_size */
+            if (t_solve < t_prop * t_ILP && alpha_bsf > alpha_LB) {
+                alpha_bsf -= alpha_red;
+            }
+            /*
+            If sub-instance can be solved in a computation time 
+                - t_solve < t_prop \times t_ILP, 
+                - alpha_bsf > alpha_LB
+            alphe_bsf is reduced by alpha_red 
+                - solutions constructed with a lower value of alpha_bsf will be rather different to s_bsf
+            */
+
+            if ( true /* fitness of s_cplex < fitness of s_bsf */) {      // solution in CPLEX is strictly better 
+                s_bsf = s_cplex;
+                Initialize(n_a, l_size, data);          // reset
+            } else {
+                if ( true /* fitness of s_cplex >  fitness of s_bsf */) {  // solution in CPLEX is strictly worse
+                    if (n_a == n_init) {
+                        alpha_bsf = std::min(alpha_bsf + alpha_red / 10.0, alpha_UB);  // enlarge alpha_bsf
+                    } 
+                    else {
+                        Initialize(n_a, l_size, data);  // reset
+                    }
+                } 
+                else {                                                   // solution in CPLEX is exactly the same
+                    Increment(n_a, l_size, data);       // increment
+                }
+            }
+                
+            /* ------------------------------ */
+            used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+            used = (clock() - stime) / CLOCKS_PER_SEC;
+
+            if (iter % OUTPUT_PER_GENS == 0)
+            {
+                printf("Iter: %d. ", iter);
+                // output(pop, pop_fit, pop_argrank, data);
+                printf("Iter %d done, no improvement for %d iters, already consumed %.2lf sec\n", iter, no_improve, used_sec);
+            }
+
+            if (data.tmax != NO_LIMIT && used_sec > clock_t(data.tmax))
+            {
+                time_exhausted = true;
+                break;
+            }        
+        }    
     }
 
-    // return s_bsf;
-    // TODO: printf()
-}
+    // TODO: print solutions (to be fixed)
+    printf("------------Summary-----------\n");
+    s_bsf.output(data);
+    if (!s_bsf.check(data)) exit(0);  // check if feasible, then save best solution and run time in file
+    printf("Total %d runs, total consumed %.2lf sec\n", run-1, time_all_run);
+    
+    std::string timelimit = std::to_string(data.tmax);
+    std::string subproblem_range = std::to_string(data.subproblem_range);
+    std::string filename = data.output + data.problem_name + "_timelimit=" + timelimit + "_subproblem=" +  subproblem_range + ".txt";
+    FILE *file_solution = fopen(filename.c_str(), "a");
+    if (file_solution == nullptr) {
+        perror("Failed to open file");
+    }
+    std::string output_s = "Details of the solution:\n";
+    int len = s_bsf.len();
+    for (int i = 0; i < len; i++)
+    {
+        Route &r=s_bsf.get(i);
+        int flag = 0;
+        double new_cost = 0.0;
+        int index_negtive_first = -1;
+        std::vector<int> &nl = r.node_list;
+        output_s += "route " + std::to_string(i) +
+                    ", node_num " + std::to_string(nl.size()) +
+                    ", cost " + std::to_string(r.transcost) +
+                    ", nodes:";
+        // update_route_status(nl, r.status_list, data, flag, new_cost, index_negtive_first); 
+        int pre = -1;            
+        for (int j = 0; j < nl.size(); j++)
+        {  
+            int node = nl[j];
+            if (pre != -1){
+                for (int sub_node: data.hyperarc[pre][node]){
+                        output_s += ' ' + std::to_string(sub_node);
+                }
+            }
+            output_s += ' ' + std::to_string(node);
+            if (data.node[node].type != 1){
+                std::ostringstream stream1;
+                std::ostringstream stream2;
+                stream1 << std::fixed << std::setprecision(2) << r.status_list[j].arr_RD;
+                stream2 << std::fixed << std::setprecision(2) << r.status_list[j].dep_RD;
+                std::string Str1 = stream1.str();
+                std::string Str2 = stream2.str();
+                output_s += "(" + Str1 + ", "+ Str2 + ")";
 
+            }
+            pre = node;
+        }
+        output_s += '\n';
+    }
+    output_s += "vehicle (route) number: " + std::to_string(len) + '\n';
+
+    std::ostringstream stream;
+    
+    stream << std::fixed << std::setprecision(2) << s_bsf.cost;
+    std::string costStr = stream.str();
+
+    output_s += "Total cost: " + costStr + '\n';
+    const char* c_output_s = output_s.c_str();
+    fprintf(file_solution, "%s", c_output_s);
+    for (int i = 0; i < run - 1; i++){
+        fprintf(file_solution, "%.2lf, %.2lf\n", solutions[i], times[i]);
+    }
+    fclose(file_solution);
+    
+    std::string filename_output = data.output +"output_1.txt";
+    FILE *file = fopen(filename_output.c_str(), "a");
+    if (file == nullptr) {
+        perror("Failed to open file");
+    }
+    const char* c_str = data.problem_name.c_str();
+    fprintf(file, "%s: %d, %.2lf, %.2lf, %.2lf, subproblem = %d, timelimit = %d\n", c_str, s_bsf.len(), s_bsf.cost, cost_all_run / (run-1), time_all_run / (run-1), data.subproblem_range, data.tmax);
+    fclose(file);
+
+}
 /*
     initializes the best-so-far solution S_bsf to a feasible solution obtained utilizing an insertion heuristic
 */
@@ -186,11 +225,15 @@ std::vector<std::vector<int>> GenerateGreedySolution() {
     return {};
 }
 
-std::vector<std::vector<int>> ProbabilisticSolutionConstruction(const std::vector<std::vector<int>>& s_bsf, double alpha_bsf, int l_size, double d_rate, double h_rate, double infeasible_rate) {
+void GenerateGreedySolution(Solution &s){
+
+}
+
+void ProbabilisticSolutionConstruction(Solution &s, Solution &s_bsf, double alpha_bsf, int l_size, Data &data){
+    double h_rate = data.h_rate;
     // Initialize random number generator
     static std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
     std::uniform_real_distribution<double> dist(0.0, 1.0);
-
     /* 
     First decision: choose construction mechanism
         - isCWsavings == true: 
@@ -198,67 +241,39 @@ std::vector<std::vector<int>> ProbabilisticSolutionConstruction(const std::vecto
             Clarke, G., & Wright, J. W. (1964). Scheduling of vehicles from a central depot to a number of delivery points. 
             Operations research, 12(4), 568-581. https://doi.org/10.1287/opre.12.4.568
     */
-    
     double r1 = dist(rng);
     bool isCWsavings = (r1 <= h_rate);
 
-    /*
-    Second decision: choose algorithm variant
-        - isInfeasible == true: 
-        allows for 
-            - battery, 
-            - time window
-        infeasibilities by simply accepting infeasible solution construction steps
-    */ 
-    double r2 = dist(rng);
-    bool isInfeasibie = (r2 <= infeasible_rate);
-    
-    // all elements in s are initialized to 0
-    std::vector<std::vector<int>> s(dim, std::vector<int>(dim, 0)); 
-
     if (isCWsavings) {
-        s = ProbabilisticClarkWrightSavings(s_bsf, isInfeasibie);
+        // s = ProbabilisticClarkWrightSavings(s_bsf, isInfeasibie);
     } 
     else {
-        ProbabilisticInsertion(s, s_bsf, l_size, d_rate, isInfeasibie);
+        // ProbabilisticInsertion(s, s_bsf, l_size, d_rate, isInfeasibie);
     }
-
-    return s;
 }
 
-
-
-std::vector<std::vector<int>> Merge(const std::vector<std::vector<int>>& C, const std::vector<std::vector<int>>& S) {
-    // Merge two solutions C and S (to be implemented based on specific problem requirements)
-    return {};
+void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<int>>& adjMatrix2, int numNodes){
+    for (int i = 0; i < numNodes; i++) {
+        for (int j = 0; j < numNodes; j++) {
+            adjMatrix1[i][j] |= adjMatrix2[i][j]; 
+        }
+    }    
 }
 
-void AddRandomEdges(std::vector<std::vector<int>>& C, double gamma) {
-    // Add random edges to the solution (to be implemented based on specific problem requirements)
+void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data){
+
 }
 
-std::pair<std::vector<std::vector<int>>, double> SolveSubinstance(const std::vector<std::vector<int>>& C, double t_ILP) {
-    // Solve the sub-instance (to be implemented based on specific problem requirements)
-    // Return a pair containing the solution and the computation time
-    return {{}, 0.0};
+void Initialize(int& n_a, int& l_size, Data& data){
+    n_a = data.n_a;
+    l_size = data.l_size;
 }
 
-void Initialize(int& n_a, int& l_size, double& gamma) {
-    // TODO: Initialize parameters (to be implemented based on specific problem requirements)
-    n_a = n_init; 
-    l_size = l_size_init;
-    gamma = gamma_init; 
-    // DONE.
+void Increment(int& n_a, int& l_size, Data& data){
+    n_a += data.delta_n;
+    l_size += data.delta_l_size;
 }
 
-void Increment(int& n_a, int& l_size, double& gamma) {
-    // TODO: Increment parameters (to be implemented based on specific problem requirements)
-    n_a += n_inc;
-    l_size += l_size_inc;
-    gamma += gamma_inc;
-    // DONE. 
-}
+void LocalSearch(Solution &s, int id){
 
-void LocalSearch(std::vector<std::vector<int>>& s, int id){
-    // TODO
 }

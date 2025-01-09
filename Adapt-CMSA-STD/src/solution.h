@@ -469,7 +469,7 @@ public:
         return this->cost;
     }
 
-    std::string build_output_str(Data &data)
+    std::string build_output_str()
     {
         std::string output_s = "Details of the solution:\n";
         int len = this->len();
@@ -480,16 +480,9 @@ public:
                         ", node_num " + std::to_string(nl.size()) +
                         ", cost " + std::to_string(this->route_list[i].transcost) +
                         ", nodes:";
-            int pre = -1;            
             for (int node : nl)
             {
-                if (pre != -1){
-                    for (int sub_node: data.hyperarc[pre][node]){
-                          output_s += ' ' + std::to_string(sub_node);
-                    }
-                }
                 output_s += ' ' + std::to_string(node);
-                pre = node;
             }
             output_s += '\n';
         }
@@ -501,13 +494,12 @@ public:
         std::string costStr = stream.str();
 
         output_s += "Total cost: " + costStr + '\n';
-        //std::to_string(this->cost) + '\n';
         return output_s;
     }
 
     void output(Data &data)
     {
-        std::string output_s = this->build_output_str(data);
+        std::string output_s = this->build_output_str();
         if (!data.if_output) std::cout << output_s;
         else
         {
@@ -562,6 +554,23 @@ public:
             return false;
         }
         return true;
+    }
+
+    // if we do not record adjMatrix, a List to record c_ij is also OK
+    void adjMatrixRepresentation(std::vector<std::vector<int>>& adjMatrix, int depot){
+        int len = this->len();
+        for (int i = 0; i < len; i++)
+        {
+            std::vector<int> &nl = this->route_list[i].node_list;
+            int nl_size = nl.size();
+            for (int j = 0; j < nl_size - 2; j++) {
+                int from = nl[j];     
+                int to = nl[j + 1];   
+                adjMatrix[from][to] = 1; 
+            }
+            adjMatrix[nl[nl_size-2]][depot] = 1;
+        }
+
     }
 
     double distance(const Route& p1, const Route& p2) {

@@ -136,7 +136,8 @@ public:
     double t_ILP = DEFAULT_T_ILP;
     double alpha_LB = DEFAULT_ALPHA_LB; 
     double alpha_UB = DEFAULT_ALPHA_UB; 
-    double alpha_red = DEFAULT_ALPHA_RED; 
+    double alpha_red = DEFAULT_ALPHA_RED;
+    //double alpha_bsf = DEFAULT_ALPHA_UB; 
     double d_rate = DEFAULT_D_RATE; 
     double h_rate = DEFAULT_H_RATE; 
     int n_a = DEFAULT_N_A; 
