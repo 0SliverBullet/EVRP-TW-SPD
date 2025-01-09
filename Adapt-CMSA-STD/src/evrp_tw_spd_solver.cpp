@@ -42,10 +42,25 @@ int main(int argc, char **argv)
     // optional
     parser.addArgument("--pruning");
     parser.addArgument("--output", 1);
-    parser.addArgument("--time", 1);
+    parser.addArgument("--time", 1);  // cpu_time_limit;
     parser.addArgument("--runs", 1);
+    parser.addArgument("--g_1", 1);
 
-    // parser.addArgument("--g_1", 1);
+    parser.addArgument("--t_prop", 1);
+    parser.addArgument("--t_ILP", 1);
+    parser.addArgument("--alpha_LB", 1);
+    parser.addArgument("--alpha_UB", 1);
+    parser.addArgument("--alpha_red", 1);
+    parser.addArgument("--d_rate", 1);
+    parser.addArgument("--h_rate", 1);
+    parser.addArgument("--n_a", 1);
+    parser.addArgument("--l_size", 1);
+    //parser.addArgument("--gamma", 1);
+    parser.addArgument("--delta_n", 1);
+    parser.addArgument("--delta_l_size", 1);
+    //parser.addArgument("--delta_gamma", 1);
+    //parser.addArgument("--infeasible_rate", 1);
+    parser.addArgument("--dummy_stations", 1);
     // parser.addArgument("--pop_size", 1);
     // parser.addArgument("--init", 1);
     // parser.addArgument("--k_init", 1);
@@ -70,7 +85,7 @@ int main(int argc, char **argv)
     // parser.addArgument("--regret_insertion");
     // parser.addArgument("--greedy_insertion");
     // parser.addArgument("--rd_removal_insertion");
-    // parser.addArgument("--bks", 1);
+    parser.addArgument("--bks", 1);
     parser.addArgument("--random_seed", 1);
 
     //parser.addArgument("--individual_search"); 
@@ -86,7 +101,7 @@ int main(int argc, char **argv)
     // Load data and preprocess
     Data data(parser);
     // Adapt-CMSA-STD 
-    AdaptCMSASTD(data, best_s); 
+    Adapt_CMSA_STD(data, best_s); 
 
     return 0;
 }

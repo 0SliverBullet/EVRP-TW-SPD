@@ -22,6 +22,7 @@ struct Point
     double start; // start of time window
     double end; // end of time window
     double s_time;   //service time 
+    bool idle; // specify the dummy station is available or not
 };
 
 struct Vehicle
@@ -43,9 +44,11 @@ public:
     // problem definitions
     std::string problem_name;
     std::vector<Point> node;
-    int node_num;
+    int node_num; // include dummy stations
+    int node_cardinality; // unique node
     int customer_num; // shouldn't be larger than MAX_POINT
-    int station_num; // shouldn't be larger than MAX_STATION_POINT
+    int station_num; // shouldn't be larger than MAX_STATION_POINT, dummy stations
+    int station_cardinality; // unique stations
     int station_range;  // the number of charging stations considered, i.e., sr $\in$ (0, 1], the selection range parameter.
     std::vector<std::vector<double>> dist;
     std::vector<std::vector<double>> time;
@@ -127,14 +130,29 @@ public:
     bool parallel_insertion = DEFAULT_PARALLEL_STATION_INSERTION; // PSI (SSI is used in CDNS by default)
     bool conservative_local_search = DEFAULT_CONSERVATIVE_LOCAL_SEARCH; // CLS
     bool aggressive_local_search = DEFAULT_AGGRESSIVE_LOCAL_SEARCH; // ALS (however, at least one local search should use)
-   
+
+    /* Adapt-CMSA-STD Parameters*/
+    double t_prop = DEFAULT_T_PROP;
+    double t_ILP = DEFAULT_T_ILP;
+    double alpha_LB = DEFAULT_ALPHA_LB; 
+    double alpha_UB = DEFAULT_ALPHA_UB; 
+    double alpha_red = DEFAULT_ALPHA_RED; 
+    double d_rate = DEFAULT_D_RATE; 
+    double h_rate = DEFAULT_H_RATE; 
+    int n_a = DEFAULT_N_A; 
+    int l_size = DEFAULT_L_SIZE; 
+    //double gamma; 
+    int delta_n = DEFAULT_DELTA_N; 
+    int delta_l_size = DEFAULT_DELTA_L_SIZE; 
+    //double delta_gamma; 
+    //double infeasible_rate; 
+    int dummy_stations = DEFAULT_DUMMY_STATIONS;    
+
 
     std::vector<std::string> small_opts;
     std::vector<std::string> destroy_opts;
     std::vector<std::string> repair_opts;
     Data(ArgumentParser &parser); // read problem files, set parameters
-    Data(const Data& data, std::vector<int> &subproblem); // use to load sub-data to subproblems
-    void floydWarshall(); // the Floyd-Warshall algorithm
     void pre_processing();
     void clear_mem();
     Move& get_mem(std::string &opt, const int &r1, const int &r2);

@@ -9,7 +9,7 @@ int l_size_inc;
 double gamma_init;
 double gamma_inc;
 
-void AdaptCMSASTD(Data &data, Solution &s){
+void Adapt_CMSA_STD(Data &data, Solution &s){
     // TODO
 }
 
@@ -114,7 +114,7 @@ void AdaptCMSA(
     l_size_inc = delta_l_size;
     gamma_inc = delta_gamma;
 
-    auto s_bsf = GenerateGreedySolution();
+    std::vector<std::vector<int>> s_bsf = GenerateGreedySolution();
     double alpha_bsf = alpha_UB; // solutions constructed with a high value of alpha_bsf will be rather similar to s_bsf
     Initialize(n_a, l_size, gamma);
 
@@ -125,10 +125,10 @@ void AdaptCMSA(
         double elapsed_time = std::chrono::duration<double>(current_time - start_time).count();
         if (elapsed_time >= cpu_time_limit) break;
 
-        auto C = s_bsf;
+        std::vector<std::vector<int>> C = s_bsf;
 
         for (int i = 0; i < n_a; ++i) {
-            auto S = ProbabilisticSolutionConstruction(s_bsf, alpha_bsf, l_size, d_rate, h_rate, infeasible_rate);
+            std::vector<std::vector<int>> S = ProbabilisticSolutionConstruction(s_bsf, alpha_bsf, l_size, d_rate, h_rate, infeasible_rate);
             LocalSearch(S, 1);
             C = Merge(C, S);
         }
@@ -136,8 +136,9 @@ void AdaptCMSA(
         AddRandomEdges(C, gamma);
         // it seems that this function should be removed
 
-        auto [s_cplex, t_solve] = SolveSubinstance(C, t_ILP);
-
+        std::pair<std::vector<std::vector<int>>, double> result = SolveSubinstance(C, t_ILP);
+        std::vector<std::vector<int>> s_cplex = result.first;
+        double t_solve = result.second;
         /*
         t_solve: the required computation time in CPLEX
         t_prop: a proportion, \in (0, 1)

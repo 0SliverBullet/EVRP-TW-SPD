@@ -101,5 +101,24 @@ const bool DEFAULT_PARALLEL_STATION_INSERTION = false;
 const bool DEFAULT_CONSERVATIVE_LOCAL_SEARCH = false;
 const bool DEFAULT_AGGRESSIVE_LOCAL_SEARCH = false;
 
+/* Adapt-CMSA-STD Parameters*/
+
+const double DEFAULT_T_PROP = 0.17; // [0.1, 0.8]
+const double DEFAULT_T_ILP = 40; // {5, 7, 10, 15, 20, 25, 30, 35, 40}
+const double DEFAULT_ALPHA_LB = 0.92; // [0.6, 0.99]
+const double DEFAULT_ALPHA_UB = 0.98; // [0.6, 0.99]
+const double DEFAULT_ALPHA_RED = 0.07; // [0.01, 0.1]
+const double DEFAULT_D_RATE = 0.17; // [0, 1], not mentioned
+const double DEFAULT_H_RATE = 0.5; // [0, 1], the latest version (2024/10/08) is uniformly random
+const int DEFAULT_N_A = 1; // {1, 3, 5, 10, 50, 100, 200, 300, 500}
+const int DEFAULT_L_SIZE = 100; // {3, 5, 10, 15, 20, 50, 100, 200}
+// const double DEFAULT_GAMMA = 0.1; // not use
+const int DEFAULT_DELTA_N = 1; // {1, 3, 5, 10, 50, 100, 200, 300, 400} 
+const int DEFAULT_DELTA_L_SIZE = 15; // {3, 5, 10, 15, 20, 50, 100, 200}
+// const double DEFAULT_DELTA_GAMMA = 0.1; // not use
+// const double DEFAULT_INFEASIBLE_RATE = 0.22; // [0, 1], but not use
+const int DEFAULT_DUMMY_STATIONS = 1; // small-scale: 1 or 2, medium- and large-scale: 5
+
+
 // If benchmarking O(1) evaluation
 const bool BENCHMARKING_O_1_EVAL = false;

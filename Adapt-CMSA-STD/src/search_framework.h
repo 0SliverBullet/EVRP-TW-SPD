@@ -17,7 +17,7 @@
 #include "config.h"
 using namespace std;
 
-void AdaptCMSASTD(Data &data, Solution &s);
+void Adapt_CMSA_STD(Data &data, Solution &s);
 void AdaptCMSA(
     int dimension, 
     double t_prop, 
