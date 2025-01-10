@@ -49,6 +49,7 @@ void Adapt_CMSA_STD(Data &data, Solution &s_bsf){
     /* --- main body --- */
     bool time_exhausted = false;
     int run = 1;
+    exit(0);
     for (; run <= data.runs; run++)
     {
         
