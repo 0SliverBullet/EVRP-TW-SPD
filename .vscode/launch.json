@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/wangdx_lab/cse12112328/EVRP-TW-SPD/Adapt-CMSA-STD/src",
-      "program": "/home/wangdx_lab/cse12112328/EVRP-TW-SPD/Adapt-CMSA-STD/src/build/Debug/outDebug",
+      "cwd": "/home/wangdx_lab/cse12112328/EVRP-TW-SPD/Adapt-CMSA-STD/cplex/solveInstance",
+      "program": "/home/wangdx_lab/cse12112328/EVRP-TW-SPD/Adapt-CMSA-STD/cplex/solveInstance/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
