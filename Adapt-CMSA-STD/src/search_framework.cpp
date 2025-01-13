@@ -1,4 +1,5 @@
 #include"search_framework.h"
+#include <cstdlib>
 extern clock_t find_best_time;
 extern clock_t find_bks_time;
 extern int find_best_run;
@@ -47,6 +48,11 @@ void Adapt_CMSA_STD(Data &data, Solution &s_bsf){
     adjMatrix_s.resize(numNodes, std::vector<int>(numNodes, 0)); 
 
     /* --- main body --- */
+
+    ILPmodel(data, 100); // solve the ILP model to get the optimal solution
+
+    exit(0);
+
     bool time_exhausted = false;
     int run = 1;
     exit(0);
@@ -221,10 +227,6 @@ void Adapt_CMSA_STD(Data &data, Solution &s_bsf){
 /*
     initializes the best-so-far solution S_bsf to a feasible solution obtained utilizing an insertion heuristic
 */
-std::vector<std::vector<int>> GenerateGreedySolution() {
-    // TODO: Generate an initial greedy solution (to be implemented based on specific problem requirements)
-    return {};
-}
 
 void GenerateGreedySolution(Solution &s){
 
@@ -246,10 +248,9 @@ void ProbabilisticSolutionConstruction(Solution &s, Solution &s_bsf, double alph
     bool isCWsavings = (r1 <= h_rate);
 
     if (isCWsavings) {
-        // s = ProbabilisticClarkWrightSavings(s_bsf, isInfeasibie);
+
     } 
     else {
-        // ProbabilisticInsertion(s, s_bsf, l_size, d_rate, isInfeasibie);
     }
 }
 
@@ -262,6 +263,7 @@ void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<in
 }
 
 void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data){
+    
 
 }
 

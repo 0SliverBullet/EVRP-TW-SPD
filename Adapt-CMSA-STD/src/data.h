@@ -10,6 +10,9 @@
 #include "argparse.h"
 #include "util.h"
 #include "move.h"
+#include <ilcplex/ilocplex.h>
+
+ILOSTLBEGIN
 
 struct Point
 {
@@ -35,6 +38,41 @@ struct Vehicle
     double consumption_rate; // the battery energy consumption rate of an electric vehicle per unit distance travelled
     double recharging_rate; //  it takes time recharging_rate to charge per unit of battery energy
     
+};
+
+struct CplexData{
+
+    IloInt numDepots0, numDepotsN1, numStations, numCustomers;
+    IloInt numTotal;
+    std::vector<IloInt> Depot_0, Depot_N1, Stations, Customers;
+    std::vector<IloInt> Stations_0, Customers_0, StationsCustomers, StationsCustomers_0, StationsCustomers_N1;
+    std::vector<IloInt> Total;
+
+    IloNum C, Q, g, h;
+    IloNum u_1, u_2;
+
+    vector<double> xCoord;
+    vector<double> yCoord;
+    vector<double> q;
+    vector<double> p;
+    vector<double> e;
+    vector<double> l;
+    vector<double> s;
+
+    vector<vector<double>> d;
+    vector<vector<double>> Time;
+
+    // IloNumArray xCoord; 
+    // IloNumArray yCoord; 
+    // IloNumArray q;
+    // IloNumArray p;
+
+    // IloNumArray e;      
+    // IloNumArray l;      
+    // IloNumArray s;     
+
+    // IloArray<IloNumArray> d;     
+    // IloArray<IloNumArray> Time;  
 };
 
 
@@ -153,6 +191,12 @@ public:
     std::vector<std::string> small_opts;
     std::vector<std::string> destroy_opts;
     std::vector<std::string> repair_opts;
+
+    // CPLEX parameters
+    CplexData cplex_data;
+
+    
+
     Data(ArgumentParser &parser); // read problem files, set parameters
     void pre_processing();
     void clear_mem();

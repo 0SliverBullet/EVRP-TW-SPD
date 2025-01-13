@@ -38,6 +38,7 @@ IloNum M;
 
 IloNumArray xCoord, yCoord, q, p;
 IloNumArray e, l, s;
+// vector<double> s;
 IloArray<IloNumArray> d, Time;
 
 // Define data structures
@@ -97,6 +98,7 @@ void defineData(IloEnv env) {
     p = IloNumArray(env, numTotal);
     e = IloNumArray(env, numTotal);
     l = IloNumArray(env, numTotal);
+     // s = vector<double>(numTotal);
     s = IloNumArray(env, numTotal);
 
     d = IloArray<IloNumArray>(env, numTotal);
@@ -339,30 +341,50 @@ int main(int argc, char* argv[]) {
 
         // Solve the model
         IloCplex cplex(model);
-        cplex.solve();
-        // Display solution for x[i][j]
-        env.out() << "Solution (matrix):" << std::endl;
-        for (IloInt i : Total) {
-            for (IloInt j : Total) {
-                if (i != j) {
-                    env.out() << std::abs(cplex.getValue(x[i][j])) << " ";
-                } else {
-                    env.out() << "0 "; // Diagonal or invalid entries
+
+        // cplex configuration:
+        double time_limit = 5; 
+        cplex.setOut(env.getNullStream()); // Suppress output
+        // pass the time limit to CPLEX
+        cplex.setParam(IloCplex::Param::TimeLimit, time_limit); // Time limit in seconds
+        cplex.setParam(IloCplex::Param::Threads, 1); // Single thread
+
+        double start_time = cplex.getTime();
+
+        if (cplex.solve()) {
+            // Display solution for x[i][j]
+            env.out() << "Solution (matrix):" << std::endl;
+            for (IloInt i : Total) {
+                for (IloInt j : Total) {
+                    if (i != j) {
+                        env.out() << std::abs(cplex.getValue(x[i][j])) << " ";
+                    } else {
+                        env.out() << "0 "; // Diagonal or invalid entries
+                    }
                 }
+                env.out() << std::endl; // Newline for the next row
             }
-            env.out() << std::endl; // Newline for the next row
+            // env.out() << "Solution (arc): " << std::endl;
+            // for (IloInt i : StationsCustomers_0) {
+            //     for (IloInt j : StationsCustomers_N1) {
+            //         if (i != j && cplex.getValue(x[i][j]) > 0.5) { // Check if x[i][j] is selected
+            //             env.out() << "Travel from " << i << " to " << j << std::endl;
+            //         }
+            //     }
+            // }
+            // Display results
+            env.out() << "Solution status: " << cplex.getStatus() << std::endl;
+            env.out() << "Total cost: " << cplex.getObjValue() << std::endl;
+        } else {
+            std::cout << "No solution found." << std::endl;
         }
-        env.out() << "Solution (arc): " << std::endl;
-        for (IloInt i : StationsCustomers_0) {
-            for (IloInt j : StationsCustomers_N1) {
-                if (i != j && cplex.getValue(x[i][j]) > 0.5) { // Check if x[i][j] is selected
-                    env.out() << "Travel from " << i << " to " << j << std::endl;
-                }
-            }
-        }
-        // Display results
-        env.out() << "Solution status: " << cplex.getStatus() << std::endl;
-        env.out() << "Total cost: " << cplex.getObjValue() << std::endl;
+
+        double end_time = cplex.getTime();
+        double elapsed_time = end_time - start_time;
+
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "Execution time: " << elapsed_time << " seconds" << std::endl;
+
 
     } catch (IloException& e) {
         env.out() << "Error: " << e.getMessage() << std::endl;

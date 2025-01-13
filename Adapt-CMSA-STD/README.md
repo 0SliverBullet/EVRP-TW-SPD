@@ -110,9 +110,19 @@ Please see folder `cplex/demo` which is a tutorial example; also refer to the fo
 
 1. [visual studio code 远程连接到服务器 如何配置使得 C++ 可以调用 CPLEX 头文件][https://blog.csdn.net/qq_51744740/article/details/142151784]
 
-
+```shell
 export CPLEX_STUDIO_DIR201=/home/wangdx_lab/cse12112328/opt/ibm/ILOG/CPLEX_Studio201
 export CPLUS_INCLUDE_PATH=$CPLEX_STUDIO_DIR201/cplex/include:$CPLEX_STUDIO_DIR201/concert/include:$CPLUS_INCLUDE_PATH
 export LIBRARY_PATH=$CPLEX_STUDIO_DIR201/cplex/lib/x86-64_linux/static_pic:$CPLEX_STUDIO_DIR201/concert/lib/x86-64_linux/static_pic:$LIBRARY_PATH
 export LD_LIBRARY_PATH=$CPLEX_STUDIO_DIR201/cplex/lib/x86-64_linux/static_pic:$CPLEX_STUDIO_DIR201/concert/lib/x86-64_linux/static_pic:$LD_LIBRARY_PATH
 export PATH=$CPLEX_STUDIO_DIR201/cplex/bin/x86-64_linux:$PATH
+
+```
+
+in folder `build`:
+
+```shell
+./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 10 --g_1 20 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 3
+
+```
+

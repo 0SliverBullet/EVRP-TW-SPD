@@ -15,6 +15,7 @@
 #include "time.h"
 #include "operator.h"
 #include "config.h"
+#include "cplex_solver.h"
 using namespace std;
 
 void Adapt_CMSA_STD(Data &data, Solution &s);

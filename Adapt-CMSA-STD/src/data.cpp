@@ -1,4 +1,5 @@
 #include "data.h"
+#include <cstdlib>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -18,7 +19,7 @@ Data::Data(ArgumentParser &parser)
 
     if (parser.exists("dummy_stations"))
         this->dummy_stations = std::stoi(parser.retrieve<std::string>("dummy_stations"));
-    printf("Dummy stations: %d |F|\n", this->dummy_stations);
+    printf("Dummy stations: %d|F|\n", this->dummy_stations);
 
     while (true)
     {
@@ -309,6 +310,116 @@ Data::Data(ArgumentParser &parser)
         }
     }
     fp.close();
+
+
+    /* CPLEX Data input*/
+
+    this->cplex_data.numDepots0 = 1;
+    this->cplex_data.numDepotsN1 = 1;
+    this->cplex_data.numStations = this->station_num;
+    this->cplex_data.numCustomers = this->customer_num;
+    this->cplex_data.numTotal = this->node_num + 1;
+
+    this->cplex_data.Depot_0.push_back(this->DC);
+    this->cplex_data.Depot_N1.push_back(this->node_num);
+
+    for (int i = this->customer_num + 1; i <= this->customer_num + this->station_num; i++){
+        this->cplex_data.Stations.push_back(i);
+    }
+
+    for (int i = 1; i <= this->customer_num; i++){
+        this->cplex_data.Customers.push_back(i);
+    }
+        
+    this->cplex_data.Stations_0.push_back(this->DC); 
+    for (int i = this->customer_num + 1; i <= this->customer_num + this->station_num; i++){
+        this->cplex_data.Stations_0.push_back(i);
+    }
+
+    this->cplex_data.Customers_0.push_back(this->DC);
+    for (int i = 1; i <= this->customer_num; i++){
+        this->cplex_data.Customers_0.push_back(i);
+    }
+
+    // StationsCustomers
+    for (int i = 1; i <= this->customer_num + this->station_num; i++){
+        this->cplex_data.StationsCustomers.push_back(i);
+    }
+
+    // StationsCustomers_0
+    for (int i = 0; i <= this->customer_num + this->station_num; i++){
+        this->cplex_data.StationsCustomers_0.push_back(i);
+    }
+
+    // StationsCustomers_N1
+    for (int i = 1; i <= this->node_num; i++){
+        this->cplex_data.StationsCustomers_N1.push_back(i);
+    } 
+    
+    for (int i = 0; i <= this->node_num; i++){
+        this->cplex_data.Total.push_back(i);
+    }
+
+
+    this->cplex_data.C = this->vehicle.capacity;
+
+    this->cplex_data.Q = this->vehicle.battery;
+
+    this->cplex_data.g = this->vehicle.recharging_rate;
+
+    this->cplex_data.h = this->vehicle.consumption_rate;
+
+    this->cplex_data.u_1 = this->vehicle.unit_cost;
+
+    this->cplex_data.u_2 = this->vehicle.d_cost;
+
+    
+
+    for (int i = 0; i <this->node_num; i++){
+        this->cplex_data.xCoord.push_back(this->node[i].x);
+        this->cplex_data.yCoord.push_back(this->node[i].y);
+        this->cplex_data.q.push_back(this->node[i].delivery);
+        this->cplex_data.p.push_back(this->node[i].pickup);
+        this->cplex_data.e.push_back(this->node[i].start);
+        this->cplex_data.l.push_back(this->node[i].end);
+        this->cplex_data.s.push_back(this->node[i].s_time);
+    }
+
+    this->cplex_data.xCoord.push_back(this->node[this->DC].x);
+    this->cplex_data.yCoord.push_back(this->node[this->DC].y);
+    this->cplex_data.q.push_back(this->node[this->DC].delivery);
+    this->cplex_data.p.push_back(this->node[this->DC].pickup);
+    this->cplex_data.e.push_back(this->node[this->DC].start);
+    this->cplex_data.l.push_back(this->node[this->DC].end);
+    this->cplex_data.s.push_back(this->node[this->DC].s_time);
+
+    for (int i = 0; i < this->node_num; i++){
+        std::vector<double> tmp_v_1(this->node_num + 1, 0.0);
+        std::vector<double> tmp_v_2(this->node_num + 1, 0.0);
+        for (int j = 0; j < this->node_num; j++){
+            tmp_v_1[j] = this->dist[i][j];
+            tmp_v_2[j] = this->time[i][j];
+        }
+        tmp_v_1[this->node_num] = this->dist[i][this->DC];
+        tmp_v_2[this->node_num] = this->time[i][this->DC];
+        this->cplex_data.d.push_back(tmp_v_1);
+        this->cplex_data.Time.push_back(tmp_v_2);
+    }
+    std::vector<double> tmp_v_1(this->node_num + 1, 0.0);
+    std::vector<double> tmp_v_2(this->node_num + 1, 0.0);
+    for (int j = 0; j < this->node_num; j++){
+        tmp_v_1[j] = this->dist[this->DC][j];
+        tmp_v_2[j] = this->time[this->DC][j];
+    }
+    tmp_v_1[this->node_num] = this->dist[this->DC][this->DC];
+    tmp_v_2[this->node_num] = this->time[this->DC][this->DC];
+    this->cplex_data.d.push_back(tmp_v_1);
+    this->cplex_data.Time.push_back(tmp_v_2);
+    
+     
+    
+    // ------------------------------------------------------------------------------------------------
+    
 
     this->start_time = this->node[this->DC].start;
     this->end_time = this->node[this->DC].end;
