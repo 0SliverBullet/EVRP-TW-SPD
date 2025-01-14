@@ -7,4 +7,4 @@
 #include "data.h"
 ILOSTLBEGIN
 
-void ILPmodel(Data& data, double time_limit);
+void ILPmodel(Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix = {});

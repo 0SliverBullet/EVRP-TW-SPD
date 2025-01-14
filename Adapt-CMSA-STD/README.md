@@ -119,10 +119,18 @@ export PATH=$CPLEX_STUDIO_DIR201/cplex/bin/x86-64_linux:$PATH
 
 ```
 
-in folder `build`:
+Use the executable program from the folder `build`:
 
 ```shell
-./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 10 --g_1 20 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 3
+./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 2
 
 ```
+
+
+**TODO List:**
+
+ [] random number generator should be optimized
+ [] code programing optimization
+ [] make sure that each dummy station is used at most once
+ [] pay attention to memory manage
 

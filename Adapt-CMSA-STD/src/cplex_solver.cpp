@@ -10,7 +10,7 @@
 // Example Instance: c103C5
 // --------------------------------------------------------------------------
 #include "cplex_solver.h"
-void ILPmodel(Data& data, double time_limit){
+void ILPmodel(Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix){
 
     IloEnv env;
     IloInt numTotal = data.cplex_data.numTotal;
@@ -18,7 +18,7 @@ void ILPmodel(Data& data, double time_limit){
         // Decision variables
         IloModel model(env);
 
-        IloNumVarArray t(env, numTotal, 0.0, IloInfinity);  // IloInfinity to be optimized
+        IloNumVarArray t(env, numTotal, data.start_time, data.end_time); 
         IloArray<IloNumVarArray> U(env, numTotal);
         IloArray<IloNumVarArray> V(env, numTotal);
         IloNumVarArray y(env, numTotal, 0.0, data.cplex_data.Q);
@@ -51,6 +51,26 @@ void ILPmodel(Data& data, double time_limit){
         for (IloInt i: data.cplex_data.Total) {
             model.add(x[i][data.cplex_data.Depot_0[0]] == 0); // No arcs to the depot_0
             model.add(x[data.cplex_data.Depot_N1[0]][i] == 0); // No arcs from the depot_N1
+        }
+        
+        if (!adjMatrix.empty()) {
+            IloInt rows = adjMatrix.size();
+            IloInt cols = adjMatrix[0].size(); 
+            for (IloInt i = 0; i < rows; i++) {
+                for (IloInt j = 1; j < cols; j++) {
+                    if (i != j && adjMatrix[i][j] == 0) {
+                        model.add(x[i][j] == 0);
+                    }
+                }
+            }
+            for (IloInt i = 0; i < rows; i++) {
+                    if (adjMatrix[i][0] == 0) {
+                        model.add(x[i][cols] == 0);
+                    }
+                
+            }
+        } else {
+            std::cout << "adjMatrix is empty!" << std::endl;
         }
         
 
@@ -195,11 +215,11 @@ void ILPmodel(Data& data, double time_limit){
         IloCplex cplex(model);
 
         // cplex configuration:
-        double time_limit = 5; 
         cplex.setOut(env.getNullStream()); // Suppress output
         // pass the time limit to CPLEX
         cplex.setParam(IloCplex::Param::TimeLimit, time_limit); // Time limit in seconds
         cplex.setParam(IloCplex::Param::Threads, 1); // Single thread
+        cplex.setParam(IloCplex::Param::MIP::Tolerances::AbsMIPGap, 0.001);
 
         double start_time = cplex.getTime();
 
@@ -209,7 +229,7 @@ void ILPmodel(Data& data, double time_limit){
             for (IloInt i : data.cplex_data.Total) {
                 for (IloInt j : data.cplex_data.Total) {
                     if (i != j) {
-                        env.out() << std::abs(cplex.getValue(x[i][j])) << " ";
+                        env.out() << (cplex.getValue(x[i][j]) > 0.5) << " ";
                     } else {
                         env.out() << "0 "; // Diagonal or invalid entries
                     }

@@ -311,7 +311,6 @@ Data::Data(ArgumentParser &parser)
     }
     fp.close();
 
-
     /* CPLEX Data input*/
 
     this->cplex_data.numDepots0 = 1;
@@ -426,6 +425,18 @@ Data::Data(ArgumentParser &parser)
     this->all_delivery = all_delivery;
     this->all_pickup = all_pickup;
 
+    // customer with either the greatest distance from the depot or the earliest deadline.
+
+    double greatest_distance = 0;
+    double earliest_deadline = this->end_time;
+    for (int i = 1; i <= this->customer_num; i++){
+        if (greatest_distance < this->dist[this->DC][i]) greatest_distance = this->dist[this->DC][i];
+        if (earliest_deadline > this->node[i].end) earliest_deadline = this->node[i].end;
+    }
+    for (int i = 1; i <= this->customer_num; i++){
+        if (greatest_distance == this->dist[this->DC][i]) greatest_distance_customers.push_back(i);
+        if (earliest_deadline == this->node[i].end) earliest_deadline_customers.push_back(i);
+    }
 
     /*
    
@@ -661,11 +672,11 @@ Data::Data(ArgumentParser &parser)
 
     if (parser.exists("n_a"))
         this->n_a = std::stoi(parser.retrieve<std::string>("n_a"));
-    printf("    n_a           : %d\n", this->n_a);
+    printf("    init_n_a      : %d\n", this->init_n_a);
 
     if (parser.exists("l_size"))
         this->l_size = std::stoi(parser.retrieve<std::string>("l_size"));
-    printf("    l_size        : %d\n", this->l_size);
+    printf("    init_l_size   : %d\n", this->init_l_size);
 
     if (parser.exists("delta_n"))
         this->delta_n = std::stoi(parser.retrieve<std::string>("delta_n"));

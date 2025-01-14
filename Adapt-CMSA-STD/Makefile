@@ -18,11 +18,11 @@ LDLIBS = -lconcert -lilocplex -lcplex -lm -lpthread -ldl
 all: $(TARGET)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(dir $@)         # 创建目标文件夹
+	@mkdir -p $(dir $@)         
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(TARGET): $(OBJ)
-	@mkdir -p $(dir $@)         # 创建目标文件夹
+	@mkdir -p $(dir $@)         
 	$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o $@
 
 clean:

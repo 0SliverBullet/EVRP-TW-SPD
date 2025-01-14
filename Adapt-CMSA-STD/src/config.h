@@ -119,6 +119,8 @@ const int DEFAULT_DELTA_L_SIZE = 15; // {3, 5, 10, 15, 20, 50, 100, 200}
 // const double DEFAULT_INFEASIBLE_RATE = 0.22; // [0, 1], but not use
 const int DEFAULT_DUMMY_STATIONS = 1; // small-scale: 1 or 2, medium- and large-scale: 5
 
+const double  DEFAULT_LAMBDA = 1.99;
+const double  DEFAULT_MU = 0.23;
 
 // If benchmarking O(1) evaluation
 const bool BENCHMARKING_O_1_EVAL = false;

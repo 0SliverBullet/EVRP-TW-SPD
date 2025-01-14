@@ -10,16 +10,17 @@
 #include <map>
 #include <numeric>
 #include <utility>
+#include <tuple>
 #include <unordered_set>
 #include <iomanip>
 #include <ctime>
 #include <unordered_map>
-// #include <windows.h>
-// #include <psapi.h>
+#include <string>
 #include "solution.h"
 #include "data.h"
 #include "config.h"
+#include "solution.h"
+#include "eval.h"
 
-std::vector<std::vector<int>> ProbabilisticClarkWrightSavings(const std::vector<std::vector<int>>& s_bsf, bool& isInfeasibie);
-// void ProbabilisticClarkWrightSavings(Solution &s, Solution &s_bsf, double alpha_bsf, Data &data, bool &isInfeasible);
-void ProbabilisticInsertion(std::vector<std::vector<int>>& s, const std::vector<std::vector<int>>& s_bsf, int& l_size, double& d_rate, bool& isInfeasible);
+void ProbabilisticClarkWrightSavings(Solution &s,  std::vector<std::vector<int>>& adjMatrix,Data &data);
+void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data);

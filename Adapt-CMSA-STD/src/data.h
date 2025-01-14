@@ -61,18 +61,6 @@ struct CplexData{
 
     vector<vector<double>> d;
     vector<vector<double>> Time;
-
-    // IloNumArray xCoord; 
-    // IloNumArray yCoord; 
-    // IloNumArray q;
-    // IloNumArray p;
-
-    // IloNumArray e;      
-    // IloNumArray l;      
-    // IloNumArray s;     
-
-    // IloArray<IloNumArray> d;     
-    // IloArray<IloNumArray> Time;  
 };
 
 
@@ -175,17 +163,20 @@ public:
     double alpha_LB = DEFAULT_ALPHA_LB; 
     double alpha_UB = DEFAULT_ALPHA_UB; 
     double alpha_red = DEFAULT_ALPHA_RED;
-    //double alpha_bsf = DEFAULT_ALPHA_UB; 
     double d_rate = DEFAULT_D_RATE; 
     double h_rate = DEFAULT_H_RATE; 
-    int n_a = DEFAULT_N_A; 
-    int l_size = DEFAULT_L_SIZE; 
+    int init_n_a = DEFAULT_N_A; 
+    int init_l_size = DEFAULT_L_SIZE; 
     //double gamma; 
     int delta_n = DEFAULT_DELTA_N; 
     int delta_l_size = DEFAULT_DELTA_L_SIZE; 
     //double delta_gamma; 
     //double infeasible_rate; 
     int dummy_stations = DEFAULT_DUMMY_STATIONS;    
+
+    double alpha_bsf = DEFAULT_ALPHA_UB; 
+    int n_a = DEFAULT_N_A; 
+    int l_size = DEFAULT_L_SIZE;     
 
 
     std::vector<std::string> small_opts;
@@ -195,6 +186,11 @@ public:
     // CPLEX parameters
     CplexData cplex_data;
 
+    double lambda = DEFAULT_LAMBDA;
+    double mu = DEFAULT_MU;
+
+    std::vector<int> greatest_distance_customers;
+    std::vector<int> earliest_deadline_customers;
     
 
     Data(ArgumentParser &parser); // read problem files, set parameters
