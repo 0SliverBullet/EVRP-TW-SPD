@@ -10,7 +10,9 @@
 // Example Instance: c103C5
 // --------------------------------------------------------------------------
 #include "cplex_solver.h"
-void ILPmodel(Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix){
+void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix){
+
+    s.cost = double(INFINITY);
 
     IloEnv env;
     IloInt numTotal = data.cplex_data.numTotal;
@@ -225,28 +227,39 @@ void ILPmodel(Data& data, double time_limit, const std::vector<std::vector<int>>
 
         if (cplex.solve()) {
             // Display solution for x[i][j]
-            env.out() << "Solution (matrix):" << std::endl;
+            std::vector<std::vector<int>> solMatrix(numTotal, std::vector<int>(numTotal, 0));
+            std::vector<int> next(numTotal, numTotal-1);
+            // env.out() << "Solution (matrix):" << std::endl;
             for (IloInt i : data.cplex_data.Total) {
                 for (IloInt j : data.cplex_data.Total) {
                     if (i != j) {
-                        env.out() << (cplex.getValue(x[i][j]) > 0.5) << " ";
-                    } else {
-                        env.out() << "0 "; // Diagonal or invalid entries
-                    }
+                        // env.out() << (cplex.getValue(x[i][j]) > 0.5) << " ";
+                        if (cplex.getValue(x[i][j]) > 0.5) {
+                            solMatrix[i][j] = 1;
+                            next[i] = j;
+                        }
+                    } 
+                    // else {
+                    //     env.out() << "0 "; // Diagonal or invalid entries
+                    // }
                 }
-                env.out() << std::endl; // Newline for the next row
+                // env.out() << std::endl; // Newline for the next row
             }
             // env.out() << "Solution (arc): " << std::endl;
-            // for (IloInt i : StationsCustomers_0) {
-            //     for (IloInt j : StationsCustomers_N1) {
+            // for (IloInt i : data.cplex_data.Total) {
+            //     for (IloInt j : data.cplex_data.Total) {
             //         if (i != j && cplex.getValue(x[i][j]) > 0.5) { // Check if x[i][j] is selected
             //             env.out() << "Travel from " << i << " to " << j << std::endl;
             //         }
             //     }
             // }
+
             // Display results
             env.out() << "Solution status: " << cplex.getStatus() << std::endl;
             env.out() << "Total cost: " << cplex.getObjValue() << std::endl;
+
+            s.routeListRepresentation(solMatrix, next, data);
+
         } else {
             std::cout << "No solution found." << std::endl;
         }
@@ -256,6 +269,8 @@ void ILPmodel(Data& data, double time_limit, const std::vector<std::vector<int>>
 
         std::cout << std::fixed << std::setprecision(4);
         std::cout << "Execution time: " << elapsed_time << " seconds" << std::endl;
+
+        t_solve = elapsed_time;
 
 
     } catch (IloException& e) {

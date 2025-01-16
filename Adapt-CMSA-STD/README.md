@@ -124,13 +124,65 @@ Use the executable program from the folder `build`:
 ```shell
 ./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 2
 
+valgrind --leak-check=full ./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 2
+
+valgrind --leak-check=full --track-origins=yes ./build/evrp-tw-spd --problem ./data/akb_instances/c101_21.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 5
+
+==1103194== Memcheck, a memory error detector
+==1103194== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==1103194== Using Valgrind-3.23.0 and LibVEX; rerun with -h for copyright info
+
+...
+
+==1101228== 
+==1101228== HEAP SUMMARY:
+==1101228==     in use at exit: 0 bytes in 0 blocks
+==1101228==   total heap usage: 2,896,254 allocs, 2,896,254 frees, 54,350,396,097 bytes allocated
+==1101228== 
+==1101228== All heap blocks were freed -- no leaks are possible
+==1101228== 
+==1101228== For lists of detected and suppressed errors, rerun with: -s
+==1101228== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+
 ```
+
+How to install `valgrind`?
+
+```shell
+
+# 1
+
+wget https://sourceware.org/pub/valgrind/valgrind-3.21.0.tar.bz2
+
+tar -xjf valgrind-3.21.0.tar.bz2
+cd valgrind-3.21.0
+
+./configure --prefix=$HOME/local
+make
+make install
+
+export PATH=$HOME/local/bin:$PATH
+export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
+
+valgrind --version
+
+# 2 (recommend)
+
+conda --version
+
+conda create -n valgrind_env -c conda-forge valgrind
+conda activate valgrind_env
+
+valgrind --version
+```
+
 
 
 **TODO List:**
 
- [] random number generator should be optimized
- [] code programing optimization
- [] make sure that each dummy station is used at most once
- [] pay attention to memory manage
+- [ ] random number generator should be optimized
+- [ ] code programing optimization
+- [X] make sure that each dummy station is used at most once
+- [X] pay attention to memory manage
+- [ ] check that each dummy station is used at most once
 

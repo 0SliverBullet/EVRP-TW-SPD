@@ -4,7 +4,9 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <vector>
+#include "solution.h"
 #include "data.h"
 ILOSTLBEGIN
 
-void ILPmodel(Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix = {});
+void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix = {});

@@ -354,13 +354,15 @@ private:
     std::vector<Route> route_list;
 
 public:
+    std::vector<bool> idle;
     double cost = 0.0;
 
     Solution(){}
 
-    Solution(Data &data)
-    { 
-        this->route_list.reserve(data.vehicle.max_num);
+    Solution(const Data &data)
+        : route_list(), idle(data.node_num, true), cost(0.0)
+    {
+        route_list.reserve(data.vehicle.max_num);
     }
     // Function to merge another Solution into this one
     void merge(const Solution& other)
@@ -557,21 +559,44 @@ public:
     }
 
     // if we do not record adjMatrix, a List to record c_ij is also OK
-    void adjMatrixRepresentation(std::vector<std::vector<int>>& adjMatrix, int depot){
+    void adjMatrixRepresentation(std::vector<std::vector<int>>& adjMatrix){
         int len = this->len();
         for (int i = 0; i < len; i++)
         {
             std::vector<int> &nl = this->route_list[i].node_list;
             int nl_size = nl.size();
-            for (int j = 0; j < nl_size - 2; j++) {
+            for (int j = 0; j < nl_size - 1; j++) {
                 int from = nl[j];     
                 int to = nl[j + 1];   
                 adjMatrix[from][to] = 1; 
             }
-            adjMatrix[nl[nl_size-2]][depot] = 1;
+            // adjMatrix[nl[nl_size-2]][depot] = 1;
         }
 
     }
+
+    void routeListRepresentation(const std::vector<std::vector<int>>& solMatrix, std::vector<int> &next, Data &data){ 
+        int numNodes = solMatrix.size();
+        for (int i = 0; i < numNodes; ++i) {
+            if (solMatrix[0][i] == 0) continue;
+            std::vector<int> nl;
+            nl.push_back(0);
+            int current = i;
+            while (current != numNodes - 1) {
+                nl.push_back(current);
+                current = next[current];
+            }
+            nl.push_back(0);
+            Route r(data);
+            r.node_list = nl;
+            this->append(r);
+        }
+
+        this->update(data);
+        this->cal_cost(data);
+        printf("%.2f\n", this->cost);
+    }
+
 
     double distance(const Route& p1, const Route& p2) {
             return std::sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));

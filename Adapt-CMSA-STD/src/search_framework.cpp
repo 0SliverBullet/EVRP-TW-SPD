@@ -57,113 +57,114 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
     //int n_a = data.n_a; // a number of n_a solutions are probabilistically constructed
     //int l_size = data.l_size; // controls the number of considered options (perturb operators?) at each solution construction step.
 
-    int numNodes = data.node_num + 1; // add "1" more since CPLEX need return depot 
+    // int numNodes = data.node_num ; // add "1" more since CPLEX need return depot 
 
     /* --- main body --- */
     bool time_exhausted = false;
     int run = 1;
     for (; run <= data.runs; run++)
     {
+        printf("---------------------------------Run %d---------------------------\n", run);
         clock_t stime = clock();
         clock_t used = 0;
         double used_sec = 0.0;
         int no_improve = 0;
         int iter = 0;
         
-        Solution s_bsf;
+        Solution s_bsf(data);
         /* ------------------------------ */
         std::vector<std::vector<int>> adjMatrix;  // C
-        adjMatrix.resize(numNodes, std::vector<int>(numNodes, 0)); 
+        adjMatrix.resize(data.node_num, std::vector<int>(data.node_num, 0)); 
 
         data.alpha_bsf = data.alpha_UB;
         Initialize(data);
 
         GenerateGreedySolution(s_bsf, adjMatrix, data);
+        used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+        printf("cost %.2lf, already consumed %.2lf sec\n", s_bsf.cost, used_sec); 
+        double cost_in_this_run = s_bsf.cost;
+        /* ------------------------------ */
+        while (!termination(no_improve, data))
+        {
+            iter++;
+            no_improve++;
+            /* ------------------------------ */
+            // store merged arc information in adjMatrix, update in each iteration
+            adjMatrix.assign(data.node_num, std::vector<int>(data.node_num, 0));
+            s_bsf.adjMatrixRepresentation(adjMatrix);
 
-        // /* ------------------------------ */
-        // while (!termination(no_improve, data))
-        // {
-        //     iter++;
-        //     no_improve++;
+            // store adjacency matrix of s_bsf in adjMatrix_tmp
+            std::vector<std::vector<int>> adjMatrix_tmp;
+            adjMatrix_tmp = adjMatrix;
 
-        //     /* ------------------------------ */
-        //     // store merged arc information in adjMatrix, update in each iteration
-        //     adjMatrix.assign(numNodes, std::vector<int>(numNodes, 0));
-        //     s_bsf.adjMatrixRepresentation(adjMatrix, numNodes);
+            // init adjacency matrix of s in adjMatrix_s
+            std::vector<std::vector<int>> adjMatrix_s;
+            adjMatrix_s.resize(data.node_num, std::vector<int>(data.node_num, 0)); 
 
-        //     // store adjacency matrix of s_bsf in adjMatrix_tmp
-        //     std::vector<std::vector<int>> adjMatrix_tmp;
-        //     adjMatrix_tmp = adjMatrix;
+            for (int i = 0; i < data.n_a; ++i) {
+                Solution s(data);
+                ProbabilisticSolutionConstruction(s, adjMatrix_tmp, data);
 
-        //     // init adjacency matrix of s in adjMatrix_s
-        //     std::vector<std::vector<int>> adjMatrix_s;
-        //     adjMatrix_s.resize(numNodes, std::vector<int>(numNodes, 0)); 
+                // LocalSearch(s, 1);
 
-        //     for (int i = 0; i < data.n_a; ++i) {
-        //         Solution s;
-        //         ProbabilisticSolutionConstruction(s, adjMatrix_tmp, data);
-
-        //         LocalSearch(s, 1);
-
-        //         adjMatrix_s.assign(numNodes, std::vector<int>(numNodes, 0));
-        //         s.adjMatrixRepresentation(adjMatrix_s, numNodes);
-        //         Merge(adjMatrix, adjMatrix_s, numNodes);
-        //     }
+                adjMatrix_s.assign(data.node_num, std::vector<int>(data.node_num, 0));
+                s.adjMatrixRepresentation(adjMatrix_s);
+                Merge(adjMatrix, adjMatrix_s, data.node_num);
+            }
             
-        //     Solution s_cplex;
-        //     double t_solve = 0.0;
+            Solution s_cplex(data);
+            double t_solve = 0.0;
 
-        //     SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
+            SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
 
-        //     LocalSearch(s_cplex, 2);
+            // LocalSearch(s_cplex, 2);
 
-        //     /* Adapt: alpha_bsf, n_a, l_size */
-        //     if (t_solve < t_prop * t_ILP && data.alpha_bsf > alpha_LB) {
-        //         data.alpha_bsf -= alpha_red;
-        //     }
-        //     /*
-        //     If sub-instance can be solved in a computation time 
-        //         - t_solve < t_prop \times t_ILP, 
-        //         - alpha_bsf > alpha_LB
-        //     alphe_bsf is reduced by alpha_red 
-        //         - solutions constructed with a lower value of alpha_bsf will be rather different to s_bsf
-        //     */
+            /* Adapt: alpha_bsf, n_a, l_size */
+            if (t_solve < t_prop * t_ILP && data.alpha_bsf > alpha_LB) {
+                data.alpha_bsf -= alpha_red;
+            }
 
-        //     if ( true /* fitness of s_cplex < fitness of s_bsf */) {      // solution in CPLEX is strictly better 
-        //         s_bsf = s_cplex;
-        //         Initialize(data);          // reset
-        //         update_best_solution(s_bsf, best_s, used, run, iter, data);
-        //     } else {
-        //         if ( true /* fitness of s_cplex >  fitness of s_bsf */) {  // solution in CPLEX is strictly worse
-        //             if (data.n_a == data.init_n_a) {
-        //                 data.alpha_bsf = std::min(data.alpha_bsf + alpha_red / 10.0, alpha_UB);  // enlarge alpha_bsf
-        //             } 
-        //             else {
-        //                 Initialize(data);  // reset
-        //             }
-        //         } 
-        //         else {                                                   // solution in CPLEX is exactly the same
-        //             Increment(data);       // increment
-        //         }
-        //     }
+            if (s_cplex.cost < s_bsf.cost) {      // solution in CPLEX is strictly better 
+                s_bsf = s_cplex;
+                Initialize(data);          // reset
+                used = (clock() - stime) / CLOCKS_PER_SEC;
+                update_best_solution(s_bsf, best_s, used, run, iter, data);
+            } else {
+                if (s_cplex.cost > s_bsf.cost) {  // solution in CPLEX is strictly worse
+                    if (data.n_a == data.init_n_a) {
+                        data.alpha_bsf = std::min(data.alpha_bsf + alpha_red / 10.0, alpha_UB);  // enlarge alpha_bsf
+                    } 
+                    else {
+                        Initialize(data);  // reset
+                    }
+                } 
+                else {                                                   // solution in CPLEX is exactly the same
+                    Increment(data);       // increment
+                }
+            }
                 
-        //     /* ------------------------------ */
-        //     used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
-        //     used = (clock() - stime) / CLOCKS_PER_SEC;
+            /* ------------------------------ */
+            if (s_bsf.cost - cost_in_this_run < -PRECISION)
+            {
+                    no_improve = 0;
+                    cost_in_this_run = s_bsf.cost;
+            }
+            used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+            used = (clock() - stime) / CLOCKS_PER_SEC;
 
-        //     if (iter % OUTPUT_PER_GENS == 0)
-        //     {
-        //         printf("Iter: %d. ", iter);
-        //         // output(pop, pop_fit, pop_argrank, data);
-        //         printf("Iter %d done, no improvement for %d iters, already consumed %.2lf sec\n", iter, no_improve, used_sec);
-        //     }
+            if (iter % OUTPUT_PER_GENS == 0)
+            {
+                printf("Iter: %d. ", iter);
+                // output(pop, pop_fit, pop_argrank, data);
+                printf("Iter %d done, no improvement for %d iters, already consumed %.2lf sec\n", iter, no_improve, used_sec);
+            }
 
-        //     if (data.tmax != NO_LIMIT && used_sec > clock_t(data.tmax))
-        //     {
-        //         time_exhausted = true;
-        //         break;
-        //     }        
-        // } 
+            if (data.tmax != NO_LIMIT && used_sec > clock_t(data.tmax))
+            {
+                time_exhausted = true;
+                break;
+            }        
+        } 
 
         used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
         used = (clock() - stime) / CLOCKS_PER_SEC;
@@ -184,11 +185,14 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
     // TODO: print solutions (to be fixed)
     printf("------------Summary-----------\n");
     best_s.output(data);
-    if (!best_s.check(data)) exit(0);  // check if feasible, then save best solution and run time in file
+    if (!best_s.check(data)) {
+        printf("Error: the best solution is not feasible\n");
+    }
+    // check if feasible, then save best solution and run time in file
     printf("Total %d runs, total consumed %.2lf sec\n", run-1, time_all_run);
     
     // write_solution_to_file(data, best_s, run, solutions, times, cost_all_run, time_all_run);
-    exit(0);
+    // exit(0);
 
 }
 /*
@@ -196,9 +200,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
 */
 
 void GenerateGreedySolution(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
-
     ProbabilisticInsertion(s, adjMatrix, data);
-
 }
 
 void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
@@ -209,7 +211,7 @@ void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>
 
     double r1 = dist(rng);
     bool isCWsavings = (r1 <= h_rate);
-    if (isCWsavings) {
+    if (false && isCWsavings) {
         ProbabilisticClarkWrightSavings(s, adjMatrix, data);
         /* 
             the C&W savings heuristic
@@ -231,8 +233,7 @@ void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<in
 }
 
 void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data){
-
-    ILPmodel(data, t_ILP, {}); // solve the ILP model to get the optimal solution
+    ILPmodel(s_cplex, t_solve, data, t_ILP, adjMatrix); // solve the ILP model to get the optimal solution
 }
 
 void Initialize(Data& data){

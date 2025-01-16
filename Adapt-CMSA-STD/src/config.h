@@ -7,7 +7,7 @@
 // for different problems
 const int MAX_POINT = 1250; 
 const int MAX_NODE_IN_ROUTE = 100;
-const int MAX_STATION_POINT = 105;
+const int MAX_STATION_POINT = 505;
 const int DEFAULT_SEED = 42;
 const int V_NUM_RELAX = 3;
 

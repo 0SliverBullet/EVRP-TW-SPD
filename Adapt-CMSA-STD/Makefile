@@ -8,7 +8,8 @@ OBJ = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC))
 DEPS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.d,$(SRC))
 
 CXX = g++
-CXXFLAGS = -O3 -fdiagnostics-color=always \
+CXXFLAGS = -std=c++11 \
+		   -O3 -fdiagnostics-color=always \
            -I/home/wangdx_lab/cse12112328/opt/ibm/ILOG/CPLEX_Studio201/cplex/include \
            -I/home/wangdx_lab/cse12112328/opt/ibm/ILOG/CPLEX_Studio201/concert/include
 LDFLAGS = -L/home/wangdx_lab/cse12112328/opt/ibm/ILOG/CPLEX_Studio201/cplex/lib/x86-64_linux/static_pic \

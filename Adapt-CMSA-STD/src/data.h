@@ -25,7 +25,6 @@ struct Point
     double start; // start of time window
     double end; // end of time window
     double s_time;   //service time 
-    bool idle; // specify the dummy station is available or not
 };
 
 struct Vehicle
@@ -82,7 +81,6 @@ public:
     std::vector<std::vector<int>> rm_argrank;
     std::vector<std::vector<bool>> pm;
     std::vector<std::vector<std::vector<int>>> optimal_staion;  // preprocess the charging stations to rank them for insertion between each pair of nodes
-    std::vector<std::vector<std::vector<int>>> hyperarc; // record information of "the shortest path in terms of travel time between every pair of nodes" to hyperarc
 
     Vehicle vehicle;
     double max_dist = 0; // max value in dist

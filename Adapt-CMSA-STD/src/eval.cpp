@@ -1,5 +1,7 @@
 #include "eval.h"
+#include <cstdio>
 #include <cstdlib>
+#include <vector>
 
 void chk_nl_node_pos_O_n(std::vector<int> &nl, int inserted_node, int pos, Data &data, int &flag, double &cost)
 {   // suppose insert into the pos
@@ -268,6 +270,127 @@ void update_route_status(std::vector<int> &nl, std::vector<status> &sl, Data &da
 
 }
 
+
+bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r, Data &data, std::vector<std::pair<int,int>> &station_insert_pos,double &heuristic_cost, Solution &s){
+    double new_cost = 0.0;
+    int index_last_f0 = index_negtive_first - 1;
+    std::vector<int>& nl = r.temp_node_list;
+
+    do {
+        // 枚举插入位点
+        index_last_f0 = std::max(index_last_f0 - 1, 0); ;
+        std::vector<int> station_pos(data.station_num);
+        int node = -1;
+        int pos = index_last_f0 + 1;
+
+        int feasible_station_1 = -1;
+        int feasible_station_4 = -1;
+
+        for (int j = 0; j <data.station_range; j++){
+            if (s.idle[data.optimal_staion[nl[pos-1]][nl[pos]][j]]){
+                node = data.optimal_staion[nl[pos-1]][nl[pos]][j];
+                if ((data.node[nl[pos-1]].type == 2 && ((nl[pos-1] - data.customer_num) % data.station_cardinality) == ((node -data.customer_num) % data.station_cardinality)) \
+                || (data.node[nl[pos]].type == 2 && ((nl[pos] - data.customer_num) % data.station_cardinality) == ((node - data.customer_num) % data.station_cardinality)) \
+                || (pos - 2 >=0 && data.node[nl[pos-1]].type == 2 && data.node[nl[pos-2]].type == 2 && ((nl[pos-2] - data.customer_num) % data.station_cardinality == (node - data.customer_num) % data.station_cardinality) ) \
+                || (pos + 1 <= nl.size()-1 && data.node[nl[pos]].type == 2 && data.node[nl[pos+1]].type == 2 && ((nl[pos+1] - data.customer_num) % data.station_cardinality == (node - data.customer_num) % data.station_cardinality)) \
+                || (nl[pos-1] == data.DC && data.dist[nl[pos-1]][node] == PRECISION) \
+                || (nl[pos] == data.DC && data.dist[node][nl[pos]] < PRECISION)) {
+                    node = -1;
+                    continue;    //剪枝：删去了(1) -f1-f1-, (2) -f1-f2-f1-, (3) depot 就地插入 的异常情况
+                } 
+                else{
+
+                    double cost = 0.0;
+                    int flag_check = 0;
+                    chk_nl_node_pos_O_n(nl, node, pos, data, flag_check, cost);  //检查capacity、time window、battery是否满足约束
+
+                    if (feasible_station_1 == -1 && flag_check == 1){
+                        feasible_station_1 = node;
+                        break;
+                    }
+                    
+                    if (feasible_station_4 == -1 && flag_check == 4){
+                        feasible_station_4 = node;
+                    }
+
+                }
+                // break;
+            }                    
+        }
+
+        if (feasible_station_1 != -1 || feasible_station_4 != -1){   
+            if (feasible_station_1 != -1){
+                node = feasible_station_1;
+            }
+            else{
+                node = feasible_station_4;
+            }
+            station_insert_pos.push_back({node,pos});
+            nl.insert(nl.begin() + pos, node);
+            s.idle[node] = false;
+            flag = 0, new_cost = 0.0, index_negtive_first = -1;
+            update_route_status(nl, r.status_list, data,flag,new_cost,index_negtive_first);
+            heuristic_cost = new_cost;
+   
+
+            // FILE* file = fopen("output.txt", "a"); // 打开文件，写入模式
+            // for (int vertex : r. temp_node_list) {
+            //     fprintf(file, "%d ", vertex); // 将数据写入文件
+            // }
+            // fprintf(file, "\n");
+
+            // fclose(file); // 关闭文件
+
+            if (flag != 4) {
+                break;
+            }
+
+        }
+    } 
+    // while (data.node[nl[index_last_f0]].type == 1);
+    while (flag == 4 && index_last_f0 > 0);
+
+    for (int i = 0; i < station_insert_pos.size(); i++){  
+        int node = station_insert_pos[i].first;
+        s.idle[node] = true;
+    }   
+    // 撤销 idle 标记   
+        
+    if (flag == 1) {
+        return true;
+    }
+    else{
+        heuristic_cost = double(INFINITY); 
+        return false;
+    }
+}
+
+
+double criterion_station(Route &r, Data &data, int node, int pos)
+{
+    std::vector<int> &nl = r.temp_node_list;
+    double alpha=1.0, beta=1.0;
+    // TD
+    int pre = nl[pos-1];
+    int suc = nl[pos];
+    double td = data.dist[pre][node] + data.dist[node][suc] - data.dist[pre][suc];
+    
+    return td;
+    // //RD
+    // double rd = r.status_list[pos-1].dep_RD  - data.dist[pre][node];
+
+    // //PD
+    // double pd = std::min((data.max_distance_reachable- r.status_list[pos-1].dep_RD + data.dist[pre][node]), (std::max(0.0, data.node[suc].start-(r.status_list[pos-1].dep_time+data.time[pre][node] + data.time[node][suc])))/data.vehicle.recharging_rate / data.vehicle.consumption_rate);
+
+    // //rdpd
+    // double rdpd = td + alpha * rd - beta * pd ;
+    // //printf("%.4lf, %.4lf, %.4lf\n", td, rd, pd);
+    
+    // return rdpd;
+}
+
+
+
 bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r, Data &data, std::vector<std::pair<int,int>> &station_insert_pos,double &heuristic_cost){
     std::vector<double> score(MAX_STATION_POINT);
     std::vector<int> score_argrank(MAX_STATION_POINT);
@@ -358,70 +481,6 @@ bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r,
         }
 }
 
-bool cal_score_customer(std::vector<int> &feasible_pos, std::vector<std::tuple<int, int>> &unrouted, \
-                        std::vector<double> &score, std::vector<int> &unrouted_index,\
-                        int &score_len, int index, Route &r, double unrouted_d, double unrouted_p, std::vector<std::vector<int>>& adjMatrix, Data &data)
-{    
-
-    /* calculate insertion criterion for each node in unrouted, return
-    false if no feasible insertion exists */
-    if (index == 0) return false;
-    int r_len = int(r.temp_node_list.size());
-    // filter all infeasible positions
-    int count1 = 0, count4 = 0, relax = 1;
-    for (int i = 0; i < index; i++)
-    {
-        int node = std::get<0>(unrouted[i]);
-        for (int pos = 1; pos < r_len; pos++)
-        {
-            int flag = 0;
-            double cost = -1.0;
-            //printf("what\n");
-            chk_nl_node_pos_O_n(r.temp_node_list, node, pos, data, flag, cost);
-            if (flag == 1) {
-                feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 1;
-                count1++;
-            }else if (flag ==4){
-                feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 4;
-                count4++;
-            }else {
-                feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 0;
-            }   
-        }
-    }
-    if (count1 + count4 == 0) return false;
-    if (count1 == 0) relax = 4;
-    // insertion criterion RCRS
-    score_len = 0;
-    for (int i = 0; i < index; i++)
-    {
-        int node = std::get<0>(unrouted[i]);
-        double best_score = double(INFINITY);
-        int best_pos = -1;
-        for (int pos = 1; pos < r_len; pos++)
-        { 
-            if (feasible_pos[i*MAX_NODE_IN_ROUTE+pos] != relax) continue;
-            //if (feasible_pos[i*MAX_NODE_IN_ROUTE+pos] == 0) continue;
-            double utility = criterion_customer(r, data, node, pos, adjMatrix);
-            
-            if (utility - best_score < -PRECISION)
-            {
-                best_score = utility;
-                best_pos = pos;
-            }
-        }
-        std::get<1>(unrouted[i]) = best_pos;
-        if (best_pos != -1){
-            score[score_len] = best_score;
-            unrouted_index[score_len] = i;
-            score_len ++; 
-        }
-    }
-    //printf("%.2lf, %d, %d\n", valid*1.0/index, valid, index);
-    return true;
-}
-
-
 bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<int> &station_pos, std::vector<double> &score, Route &r,Data &data,int index_last_f0, int index_negtive_first)
 {
     if (index_negtive_first == -1) return false;
@@ -431,32 +490,33 @@ bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<in
     for (int pos=index_last_f0+1; pos <= index_negtive_first; pos++){
             // for (int i = data.customer_num+1; i <= data.customer_num + data.station_num; i++){
             for (int j = 0; j <data.station_range; j++){
-            int i = data.optimal_staion[r.temp_node_list[pos-1]][r.temp_node_list[pos]][j];
-            int flag = 0;
-            double cost = -1.0;
-            //过滤掉那些不能走到充电站的点, 不能从同一个充电站走到自己
-            //if (r.status_list[pos-1].dep_RD + PRECISION < data.dist[r.temp_node_list[pos-1]][i] ) {
-            if (r.status_list[pos-1].dep_RD - data.dist[r.temp_node_list[pos-1]][i] < -PRECISION \
-                || (pos == 1 && data.dist[r.temp_node_list[pos-1]][i] == 0)\
-                || i == r.temp_node_list[pos-1] \
-                || i == r.temp_node_list[pos] \
-                || (data.node[r.temp_node_list[pos]].type == 0 && data.dist[i][r.temp_node_list[pos]] == 0)) {
-                flag = 0;
-            }
-            else chk_nl_node_pos_O_n(r.temp_node_list, i, pos, data, flag, cost);  //检查capacity、time window、battery是否满足约束
-            if (flag == 1) {
-                feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 1;
-                count1++;
-            }else if (flag ==4){
-                feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 4;
-                count4++;
-            }else {
-                feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 0;
-            }            
+                int i = data.optimal_staion[r.temp_node_list[pos-1]][r.temp_node_list[pos]][j];
+                int flag = 0;
+                double cost = -1.0;
+                //过滤掉那些不能走到充电站的点, 不能从同一个充电站走到自己
+                //if (r.status_list[pos-1].dep_RD + PRECISION < data.dist[r.temp_node_list[pos-1]][i] ) {
+                if (r.status_list[pos-1].dep_RD - data.dist[r.temp_node_list[pos-1]][i] < -PRECISION \
+                    || (pos == 1 && data.dist[r.temp_node_list[pos-1]][i] == 0)\
+                    || i == r.temp_node_list[pos-1] \
+                    || i == r.temp_node_list[pos] \
+                    || (data.node[r.temp_node_list[pos]].type == 0 && data.dist[i][r.temp_node_list[pos]] == 0)) {
+                    flag = 0;
+                }
+                else chk_nl_node_pos_O_n(r.temp_node_list, i, pos, data, flag, cost);  //检查capacity、time window、battery是否满足约束
+                if (flag == 1) {
+                    feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 1;
+                    count1++;
+                }else if (flag ==4){
+                    feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 4;
+                    count4++;
+                }else {
+                    feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 0;
+                }            
           }
     }
     if (count1 + count4 ==0) return false;
     if (count1 == 0) relax = 4;
+    // insertion criterion RDPD
     if (type ==false) {
             for (int i = data.customer_num+1; i <= data.customer_num + data.station_num; i++)
             {
@@ -503,52 +563,45 @@ bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<in
 
 }
 
-
 double cal_additional_savings_value(int pos1, int pos2, double alpha_bsf, std::vector<std::vector<int>>& adjMatrix, Data &data){
     // savings value
     double sigma = data.dist[0][pos1] + data.dist[0][pos2] - data.lambda * data.dist[pos1][pos2] + data.mu * std::abs(data.dist[0][pos1] - data.dist[0][pos2]);
     // additional savings value
+    double q = 0;
     if (adjMatrix[pos1][pos2] == 1){
-        return (sigma + 1) * alpha_bsf;
+        q = (sigma + 1) * alpha_bsf;
     }
     else{
-        return (sigma + 1) * (1 - alpha_bsf);
+        q = (sigma + 1) * (1 - alpha_bsf);
     }
+    return q;
 }
 
-double criterion_station(Route &r, Data &data, int node, int pos)
-{
-    std::vector<int> &nl = r.temp_node_list;
-    double alpha=1.0, beta=1.0;
-    // TD
-    int pre = nl[pos-1];
-    int suc = nl[pos];
-    double td = data.dist[pre][node] + data.dist[node][suc] - data.dist[pre][suc];
-    
-    return td;
-}
 
 double criterion_customer(Route &r, Data &data, int node, int pos, std::vector<std::vector<int>>& adjMatrix)
 {
-    std::vector<int> &nl = r.temp_node_list;
+    std::vector<int> &nl = r.node_list;
     // TD
     int pre = nl[pos-1];
     int suc = nl[pos];
     double td = data.dist[pre][node] + data.dist[node][suc] - data.dist[pre][suc];
     
     double alpha_bsf = data.alpha_bsf;
+    double q = 0;
     if (adjMatrix[pre][node] == 1 && adjMatrix[node][suc] == 1)
     {
-        return (td + 1) * (1 - alpha_bsf) * (1 - alpha_bsf);
+        q = (td + 1) * (1 - alpha_bsf) * (1 - alpha_bsf);
     }
     else if (adjMatrix[pre][node] == 0 && adjMatrix[node][suc] == 0)
     {
-        return (td + 1) * alpha_bsf * alpha_bsf;
+        q = (td + 1) * alpha_bsf * alpha_bsf;
     }
     else
     {
-        return (td + 1) * alpha_bsf * (1 - alpha_bsf) ;
+        q = (td + 1) * alpha_bsf * (1 - alpha_bsf) ;
     }
+    // return q;
+    return  1.0 / q;
 }
 
 

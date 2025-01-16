@@ -1,4 +1,5 @@
 #include "data.h"
+#include <cstdio>
 #include <cstdlib>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -49,7 +50,7 @@ Data::Data(ArgumentParser &parser)
             std::vector<double> tmp_v_1(this->node_num, 0.0);
             for (int i = 0; i < this->node_num; i++)
             {
-                this->node.push_back({0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, true});
+                this->node.push_back({0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
             }
         }
         else if (results[0] == "VEHICLES")
@@ -188,7 +189,12 @@ Data::Data(ArgumentParser &parser)
             // copy stations
             for (int i = this->customer_num + 1; i <= this->customer_num + this->station_cardinality; i++){
                 for (int j = 1; j <= this->dummy_stations - 1; j++){
-                    this->node.push_back({0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, true});
+                    this->node.push_back({0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+                }
+
+            }
+            for (int i = this->customer_num + 1; i <= this->customer_num + this->station_cardinality; i++){
+                for (int j = 1; j <= this->dummy_stations - 1; j++){
                     int dummy_idx = i + j * this->station_cardinality;
                     this->node[dummy_idx].type = this->node[i].type;
                     this->node[dummy_idx].x = this->node[i].x;
@@ -198,7 +204,6 @@ Data::Data(ArgumentParser &parser)
                     this->node[dummy_idx].start = this->node[i].start;
                     this->node[dummy_idx].end = this->node[i].end;
                     this->node[dummy_idx].s_time = this->node[i].s_time;
-                    this->node[dummy_idx].idle = this->node[i].idle;
                 }
 
             }
@@ -429,20 +434,35 @@ Data::Data(ArgumentParser &parser)
 
     double greatest_distance = 0;
     double earliest_deadline = this->end_time;
-    for (int i = 1; i <= this->customer_num; i++){
-        if (greatest_distance < this->dist[this->DC][i]) greatest_distance = this->dist[this->DC][i];
-        if (earliest_deadline > this->node[i].end) earliest_deadline = this->node[i].end;
+
+    for (int i = 1; i <= this->customer_num; i++) {
+        this->greatest_distance_customers.push_back(i);
+        this->earliest_deadline_customers.push_back(i);
     }
-    for (int i = 1; i <= this->customer_num; i++){
-        if (greatest_distance == this->dist[this->DC][i]) greatest_distance_customers.push_back(i);
-        if (earliest_deadline == this->node[i].end) earliest_deadline_customers.push_back(i);
-    }
+
+    std::sort(this->greatest_distance_customers.begin(), this->greatest_distance_customers.end(),
+        [this](int a, int b) {
+            return this->dist[this->DC][a] > this->dist[this->DC][b];
+        });
+
+    std::sort(this->earliest_deadline_customers.begin(), this->earliest_deadline_customers.end(),
+        [this](int a, int b) {
+            return this->node[a].end < this->node[b].end;
+        });
+
+    // for (int i = 1; i <= this->customer_num; i++){
+    //     if (greatest_distance < this->dist[this->DC][i]) greatest_distance = this->dist[this->DC][i];
+    //     if (earliest_deadline > this->node[i].end) earliest_deadline = this->node[i].end;
+    // }
+    // for (int i = 1; i <= this->customer_num; i++){
+    //     if (greatest_distance == this->dist[this->DC][i]) greatest_distance_customers.push_back(i);
+    //     if (earliest_deadline == this->node[i].end) earliest_deadline_customers.push_back(i);
+    // }
 
     /*
    
     we preprocess the charging stations to rank them for insertion between each pair of nodes. 
     The ranking metric is the extra cost induced by insertion.
-    To balance efficiency and solution quality, only the top sr·|F| ranked charging stations are considered for insertion in both PSI and SSI
     
     */
 
@@ -586,7 +606,6 @@ Data::Data(ArgumentParser &parser)
               }  
         }
     }       
-    
     // print summary information
     printf("Node number: %d\n", this->node_num);
     printf("Customer number: %d\n", this->customer_num);
