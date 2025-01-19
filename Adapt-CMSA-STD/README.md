@@ -128,6 +128,8 @@ valgrind --leak-check=full ./build/evrp-tw-spd --problem ./data/akb_instances/c1
 
 valgrind --leak-check=full --track-origins=yes ./build/evrp-tw-spd --problem ./data/akb_instances/c101_21.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 5
 
+valgrind --leak-check=full ./build/evrp-tw-spd --problem ./data/akb_instances/c101_21.txt --pruning --time 630 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 5
+
 ==1103194== Memcheck, a memory error detector
 ==1103194== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
 ==1103194== Using Valgrind-3.23.0 and LibVEX; rerun with -h for copyright info
@@ -185,4 +187,5 @@ valgrind --version
 - [X] make sure that each dummy station is used at most once
 - [X] pay attention to memory manage
 - [ ] check that each dummy station is used at most once
+- [X] should s_cplex.idle be updated? Not Necessary!
 

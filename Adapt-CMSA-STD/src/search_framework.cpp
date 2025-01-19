@@ -1,4 +1,5 @@
 #include"search_framework.h"
+#include <cstdio>
 #include <cstdlib>
 extern clock_t find_best_time;
 extern clock_t find_bks_time;
@@ -84,6 +85,9 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
         printf("cost %.2lf, already consumed %.2lf sec\n", s_bsf.cost, used_sec); 
         double cost_in_this_run = s_bsf.cost;
         /* ------------------------------ */
+
+        // no_improve = data.g_1 + 1;
+
         while (!termination(no_improve, data))
         {
             iter++;
@@ -186,7 +190,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
     printf("------------Summary-----------\n");
     best_s.output(data);
     if (!best_s.check(data)) {
-        printf("Error: the best solution is not feasible\n");
+        printf("\n Error: the best solution is not feasible \n");
     }
     // check if feasible, then save best solution and run time in file
     printf("Total %d runs, total consumed %.2lf sec\n", run-1, time_all_run);
@@ -201,6 +205,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
 
 void GenerateGreedySolution(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
     ProbabilisticInsertion(s, adjMatrix, data);
+    // ProbabilisticClarkWrightSavings(s, adjMatrix, data);
 }
 
 void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
@@ -211,7 +216,8 @@ void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>
 
     double r1 = dist(rng);
     bool isCWsavings = (r1 <= h_rate);
-    if (false && isCWsavings) {
+    if (isCWsavings) {
+        printf("ProbabilisticClarkWrightSavings\n");
         ProbabilisticClarkWrightSavings(s, adjMatrix, data);
         /* 
             the C&W savings heuristic
@@ -220,6 +226,7 @@ void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>
         */
     } 
     else {
+        printf("ProbabilisticInsertion\n");
         ProbabilisticInsertion(s, adjMatrix, data);
     } 
 }

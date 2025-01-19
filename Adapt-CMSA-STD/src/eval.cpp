@@ -389,183 +389,12 @@ double criterion_station(Route &r, Data &data, int node, int pos)
     // return rdpd;
 }
 
-
-
-bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r, Data &data, std::vector<std::pair<int,int>> &station_insert_pos,double &heuristic_cost){
-    std::vector<double> score(MAX_STATION_POINT);
-    std::vector<int> score_argrank(MAX_STATION_POINT);
-    std::vector<int> ties(MAX_STATION_POINT);
-    std::vector<int> feasible_pos(MAX_NODE_IN_ROUTE*MAX_POINT, 0);
-    int station_pos_num = 0;
-    bool station_pos_type = false;  
-    //false 表示从station选最好的插入；
-    //true 表示pos选最好的station插入；
-    double new_cost = 0.0;
-    while (flag == 4){
-            int index_last_f0 = index_negtive_first;
-            do {
-              index_last_f0--;
-            }while (data.node[r.temp_node_list[index_last_f0]].type == 1);
-            // -----------------------------------
-            int path_len = index_negtive_first - index_last_f0;
-            if (data.station_num <= path_len){
-                station_pos_num = data.station_num;
-                station_pos_type = false; 
-            }
-            else{
-                station_pos_num = path_len;
-                station_pos_type = true;
-            }
-            std::vector<int> station_pos(station_pos_num);
-            // ----------------------------------
-            if (cal_score_station(station_pos_type, feasible_pos,station_pos,score,r,data,index_last_f0,index_negtive_first))
-            {
-            argsort(score, score_argrank, station_pos_num);
-            double best_score = score[score_argrank[0]];
-            ties[0] = score_argrank[0];
-
-            int selected;
-            int i = 1;
-            for (; i < station_pos_num; i++)
-            {
-                if (std::abs(best_score - score[score_argrank[i]]) < -PRECISION)
-                    ties[i] = score_argrank[i];
-                else
-                    break;
-            } //consider the same score
-            if (i > 1) selected = ties[randint(0, i - 1, data.rng)];
-            else selected = ties[0];
-
-            // insert station 弥补电量，同时capacity、time window的约束也满足
-            
-            int node; 
-            int pos;
-            if (station_pos_type == false){
-                    node = selected + data.customer_num+1;
-                    pos = station_pos[selected];                
-            }
-            else{
-                    pos = selected + index_last_f0 + 1;
-                    node = station_pos[selected];               
-            }
-            // printf("充电站 %d, 位置 %d\n",node,pos);
-            if (r.temp_node_list[pos-1]==node || r.temp_node_list[pos] == node \
-            || (pos - 2 >=0 && r.temp_node_list[pos-2]==node && data.node[r.temp_node_list[pos-1]].type == 2) \
-            || (pos + 1 <= r.temp_node_list.size()-1 && r.temp_node_list[pos+1]==node && data.node[r.temp_node_list[pos]].type == 2)) {
-                break;    //剪枝：删去了-f1-f1-, -f1-f2-f1-的插入情况
-            }
-            station_insert_pos.push_back({node,pos});
-            r.temp_node_list.insert(r.temp_node_list.begin() + pos, node);
-            flag = 0;
-            new_cost = 0.0;
-            index_negtive_first = -1;
-            update_route_status(r.temp_node_list, r.status_list, data,flag,new_cost,index_negtive_first);
-            heuristic_cost = new_cost;
-            // printf("flag: %d\n",flag);
-            // for (int i=0; i<r.temp_node_list.size(); i++){
-            //    printf("%d: <%.4lf, %.4lf, %.4lf, %.4lf>, ", r.temp_node_list[i], r.status_list[i].arr_time, r.status_list[i].dep_time, r.status_list[i].arr_RD, r.status_list[i].dep_RD);
-            // }
-            // printf("\n");
-            }
-            else{ //没有可行的插入充电站解决，回溯撤销添加customer, 对于first customer不可能出现
-            break;
-            }
-        }
-        
-        if (flag==1) {
-        return true;
-        }
-        else{
-        heuristic_cost = double(INFINITY);
-        return false;
-        }
-}
-
-bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<int> &station_pos, std::vector<double> &score, Route &r,Data &data,int index_last_f0, int index_negtive_first)
-{
-    if (index_negtive_first == -1) return false;
-    int r_len = int(r.temp_node_list.size());
-    // filter all infeasible positions
-    int count1 = 0, count4 = 0, relax = 1;          
-    for (int pos=index_last_f0+1; pos <= index_negtive_first; pos++){
-            // for (int i = data.customer_num+1; i <= data.customer_num + data.station_num; i++){
-            for (int j = 0; j <data.station_range; j++){
-                int i = data.optimal_staion[r.temp_node_list[pos-1]][r.temp_node_list[pos]][j];
-                int flag = 0;
-                double cost = -1.0;
-                //过滤掉那些不能走到充电站的点, 不能从同一个充电站走到自己
-                //if (r.status_list[pos-1].dep_RD + PRECISION < data.dist[r.temp_node_list[pos-1]][i] ) {
-                if (r.status_list[pos-1].dep_RD - data.dist[r.temp_node_list[pos-1]][i] < -PRECISION \
-                    || (pos == 1 && data.dist[r.temp_node_list[pos-1]][i] == 0)\
-                    || i == r.temp_node_list[pos-1] \
-                    || i == r.temp_node_list[pos] \
-                    || (data.node[r.temp_node_list[pos]].type == 0 && data.dist[i][r.temp_node_list[pos]] == 0)) {
-                    flag = 0;
-                }
-                else chk_nl_node_pos_O_n(r.temp_node_list, i, pos, data, flag, cost);  //检查capacity、time window、battery是否满足约束
-                if (flag == 1) {
-                    feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 1;
-                    count1++;
-                }else if (flag ==4){
-                    feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 4;
-                    count4++;
-                }else {
-                    feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 0;
-                }            
-          }
-    }
-    if (count1 + count4 ==0) return false;
-    if (count1 == 0) relax = 4;
-    // insertion criterion RDPD
-    if (type ==false) {
-            for (int i = data.customer_num+1; i <= data.customer_num + data.station_num; i++)
-            {
-                double best_score = double(INFINITY);
-                int best_pos = -1;
-                for (int pos=index_last_f0+1; pos <= index_negtive_first; pos++)
-                {
-                    if (feasible_pos[i*MAX_NODE_IN_ROUTE+pos] != relax) continue;
-                    //if (feasible_pos[i*MAX_NODE_IN_ROUTE+pos] == 0) continue;
-                    double utility = criterion_station(r, data, i, pos);
-                    if (utility - best_score < -PRECISION)
-                    {
-                        best_score = utility;
-                        best_pos = pos;
-                    }
-                }
-                station_pos[i-data.customer_num-1] = best_pos;
-                score[i-data.customer_num-1] = best_score;
-            }        
-    }
-    else{
-            for (int pos=index_last_f0+1; pos <= index_negtive_first; pos++)
-            {
-                double best_score = double(INFINITY);
-                int best_station = -1;
-                for (int j = 0; j <data.station_range; j++)
-                {
-                    int i = data.optimal_staion[r.temp_node_list[pos-1]][r.temp_node_list[pos]][j];
-                    if (feasible_pos[i*MAX_NODE_IN_ROUTE+pos]!=relax) continue;
-                    //if (feasible_pos[i*MAX_NODE_IN_ROUTE+pos] == 0) continue;
-                    double utility = criterion_station(r, data, i, pos);
-                    if (utility - best_score < -PRECISION)
-                    {
-                        best_score = utility;
-                        best_station = i;
-                    }
-                }
-                station_pos[pos-index_last_f0-1] = best_station;
-                score[pos-index_last_f0-1] = best_score;
-            } 
-    }
-
-    return true;    
-
-}
-
-double cal_additional_savings_value(int pos1, int pos2, double alpha_bsf, std::vector<std::vector<int>>& adjMatrix, Data &data){
+double cal_additional_savings_value(int pos1, int pos2, std::vector<std::vector<int>>& adjMatrix, Data &data){
     // savings value
     double sigma = data.dist[0][pos1] + data.dist[0][pos2] - data.lambda * data.dist[pos1][pos2] + data.mu * std::abs(data.dist[0][pos1] - data.dist[0][pos2]);
+    
+    double alpha_bsf = data.alpha_bsf;
+
     // additional savings value
     double q = 0;
     if (adjMatrix[pos1][pos2] == 1){
@@ -587,6 +416,7 @@ double criterion_customer(Route &r, Data &data, int node, int pos, std::vector<s
     double td = data.dist[pre][node] + data.dist[node][suc] - data.dist[pre][suc];
     
     double alpha_bsf = data.alpha_bsf;
+    // additional costs value
     double q = 0;
     if (adjMatrix[pre][node] == 1 && adjMatrix[node][suc] == 1)
     {
