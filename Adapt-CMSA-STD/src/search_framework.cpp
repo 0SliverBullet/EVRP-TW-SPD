@@ -118,11 +118,10 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
             
             Solution s_cplex(data);
             double t_solve = 0.0;
-            bool optimal = false; // cplex.getCplexStatus() == IloCplex::Optimal ? true : false
 
-            SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data, optimal); 
+            SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
             
-            if (!optimal) LocalSearch(s_cplex, data, 2);
+            LocalSearch(s_cplex, data, 2);
 
             /* Adapt: alpha_bsf, n_a, l_size */
             if (t_solve < t_prop * t_ILP && data.alpha_bsf > alpha_LB) {
@@ -234,8 +233,8 @@ void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<in
     }    
 }
 
-void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data, bool& optimal){
-    ILPmodel(s_cplex, t_solve, data, t_ILP, adjMatrix, optimal); // solve the ILP model to get the optimal solution
+void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data){
+    ILPmodel(s_cplex, t_solve, data, t_ILP, adjMatrix); // solve the ILP model to get the optimal solution
     int len = s_cplex.len();
     for (int i = 0; i < len; i++){
         Route& r = s_cplex.get(i);
@@ -259,10 +258,30 @@ void Increment(Data& data){
 }
 
 void LocalSearch(Solution &s, Data& data, int id){
-    printf("LocalSearch%d\n", id);
+    printf("Before LocalSearch%d: %.2lf\n", id, s.cost);
     double base_cost = s.cost;
+
+    for (int j = 0; j< s.len(); j++ ){
+        Route &r = s.get(j);
+        r.customer_list = r.node_list;
+        auto &nodes = r.customer_list;
+        nodes.erase(std::remove_if(nodes.begin(), nodes.end(), 
+                [&data](int node) { return data.node[node].type == 2; }), nodes.end());
+        r.node_list.swap(r.customer_list);
+        r.update(data);    
+        //no need to update total_cost                      
+    }   
+
     find_local_optima(s, data, base_cost, id-1);
-    printf("After LocalSearch%d: %.2lf", id, s.cost);
+
+    for (int j = 0; j< s.len(); j++ ){
+        Route &r = s.get(j);
+        std::swap(r.node_list, r.customer_list);
+        r.update(data);                          
+    } 
+    s.cal_cost(data);
+
+    printf("After LocalSearch%d: %.2lf\n", id, s.cost);
 }
 
 

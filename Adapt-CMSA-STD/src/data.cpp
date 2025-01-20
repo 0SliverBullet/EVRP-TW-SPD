@@ -690,12 +690,12 @@ Data::Data(ArgumentParser &parser)
         this->h_rate = std::stod(parser.retrieve<std::string>("h_rate"));
     printf("    h_rate        : %.2lf\n", this->h_rate);
 
-    if (parser.exists("n_a"))
-        this->n_a = std::stoi(parser.retrieve<std::string>("n_a"));
+    if (parser.exists("init_n_a"))
+        this->init_n_a = std::stoi(parser.retrieve<std::string>("init_n_a"));
     printf("    init_n_a      : %d\n", this->init_n_a);
 
-    if (parser.exists("l_size"))
-        this->l_size = std::stoi(parser.retrieve<std::string>("l_size"));
+    if (parser.exists("init_l_size"))
+        this->init_l_size = std::stoi(parser.retrieve<std::string>("init_l_size"));
     printf("    init_l_size   : %d\n", this->init_l_size);
 
     if (parser.exists("delta_n"))
@@ -885,15 +885,16 @@ void Data::clear_mem()
 
 Move &Data::get_mem(std::string &opt, const int &r1, const int &r2)
 {
-    if (opt == "2opt")
+
+    if (opt == "relocation")
         return this->mem[opt][r1];
-    else if (opt == "2opt*")
-        return this->mem[opt][r1 * this->vehicle.max_num + r2];
-    else if (opt == "oropt_single")
+    else if (opt == "swap")
         return this->mem[opt][r1];
-    else if (opt == "oropt_double")
+    else if (opt == "2opt")
+        return this->mem[opt][r1];
+    else if (opt == "exchange_1_1")
         return this->mem[opt][r1 * this->vehicle.max_num + r2];
-    else if (opt == "2exchange")
+    else if (opt == "shift_1_0")
         return this->mem[opt][r1 * this->vehicle.max_num + r2];
     else
     {

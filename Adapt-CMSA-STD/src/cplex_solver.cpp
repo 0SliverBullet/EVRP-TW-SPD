@@ -10,7 +10,7 @@
 // Example Instance: c103C5
 // --------------------------------------------------------------------------
 #include "cplex_solver.h"
-void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix, bool& optimal){
+void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix){
 
     s.cost = double(INFINITY);
 
@@ -258,7 +258,7 @@ void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const
             env.out() << "Solution status: " << cplex.getStatus() << std::endl;
             env.out() << "Total cost: " << cplex.getObjValue() << std::endl;
 
-            optimal = (cplex.getCplexStatus() == IloCplex::Optimal);
+            // optimal = (cplex.getCplexStatus() == IloCplex::Optimal);
 
             s.routeListRepresentation(solMatrix, next, data);
 

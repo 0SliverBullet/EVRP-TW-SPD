@@ -22,7 +22,7 @@ void Adapt_CMSA_STD(Data &data, Solution &s);
 void GenerateGreedySolution(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data);
 void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data);
 void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<int>>& adjMatrix2, int numNodes);
-void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data, bool& optimal);
+void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data);
 void Initialize(Data& data);
 void Increment(Data& data);
 void LocalSearch(Solution &s, Data& data,int id);

@@ -545,7 +545,6 @@ bool eval_route(Solution &s, Seq *seqList, int seqListLen, Attr &tmp_attr, Data 
     return true;
 }
 
-// to be checked
 bool eval_move(Solution &s, Move &m, Data &data, double &base_cost)
 {
     std::vector<int> r_indice;
@@ -577,11 +576,9 @@ bool eval_move(Solution &s, Move &m, Data &data, double &base_cost)
 
     if (m.delta_cost < -PRECISION) {
 
-        if (base_cost == -1) return true; //use Aggressive Local Search (ALS) 
+        if (base_cost == -1) return true; 
 
-        //else use Conservative Local Search
-           
-        Solution item = s;
+        Solution item = s;  // *** 注意这里也不是引用类型 ***
         std::vector<int> tour_id_array;
         //clock_t stime1 = clock();
         tour_id_array = apply_move(item, m, data);
@@ -589,28 +586,56 @@ bool eval_move(Solution &s, Move &m, Data &data, double &base_cost)
         //printf("time: %.10lf sec\n", used_sec1);
         double ori_cost = s.get(m.r_indice[0]).total_cost;
         if (m.r_indice[1] >= 0) ori_cost += s.get(m.r_indice[1]).total_cost;
+
         double new_cost = 0.0;
         std::vector<std::pair<int,int>> station_insert_pos;
         station_insert_pos.reserve(MAX_NODE_IN_ROUTE);  // 一条route的充电站备选插入位置
 
         for (auto j: tour_id_array) {
-                if (j >= item.len()) {
-                    if (m.r_indice[0] < item.len() && m.r_indice[1] < item.len()) ori_cost += s.get(j).total_cost;
-                    continue;
+            if (j >= item.len()) {
+                if (m.r_indice[0] < item.len() && m.r_indice[1] < item.len()) ori_cost += s.get(j).total_cost;
+                continue;
+            }
+            Route r = item.get(j); // *** 注意这里不是引用类型 ***
+            std::swap(r.node_list, r.customer_list);  
+            r.temp_node_list = r.customer_list; // node_list 含有充电站, customer_list 不含充电站
+
+            // *** 暂时取下充电站 ***
+            for (int node: r.node_list){
+                if (data.node[node].type == 2){
+                    item.idle[node] = true;
                 }
-                Route r= item.get(j);
-                std::swap(r.node_list, r.customer_list);
-                r.temp_node_list = r.customer_list;
-                int flag = 0;
-                double cost = 0.0;
-                int index_negtive_first = -1;
-                update_route_status(r.temp_node_list,r.status_list,data,flag,cost,index_negtive_first); 
-                //printf("route: %d, %d\n", j, flag);
-                if (flag == 0 || flag == 2 || flag == 3) return false;
-                if (flag == 1) { item.get(j).total_cost = item.get(j).cal_cost(data); }
+            }
+
+            int flag = 0;
+            double cost = 0.0;
+            int index_negtive_first = -1;
+            update_route_status(r.temp_node_list,r.status_list,data,flag,cost,index_negtive_first); 
+            //printf("route: %d, %d\n", j, flag);
+            if (flag == 0 || flag == 2 || flag == 3) 
+                return false;
+            if (flag == 1) { 
+                item.get(j).total_cost = item.get(j).cal_cost(data); 
+            }
+            if (flag == 4) {
+                // TODO: 
                 station_insert_pos.clear();
-                if (flag == 4 && ! sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, cost, item)) return false;
-                new_cost += item.get(j).total_cost;
+                if (sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, cost, item)){
+                    // *** 再次放回充电站 ***
+                    for (int i=0; i<station_insert_pos.size(); i++){
+                        r.customer_list.insert(r.customer_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
+                        item.idle[station_insert_pos[i].first] = false;
+                    }
+                    item.get(j).node_list = r.customer_list; 
+                    item.get(j).update(data);
+                    item.get(j).total_cost = item.get(j).cal_cost(data);
+                }
+                else{
+                    item.cost=double(INFINITY);
+                    return false;
+                }
+            }
+            new_cost += item.get(j).total_cost;
         } 
 
         m.delta_cost = new_cost - ori_cost;

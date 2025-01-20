@@ -122,13 +122,13 @@ export PATH=$CPLEX_STUDIO_DIR201/cplex/bin/x86-64_linux:$PATH
 Use the executable program from the folder `build`:
 
 ```shell
-./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 2
+# ./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 2
 
-valgrind --leak-check=full ./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 2
+# valgrind --leak-check=full ./build/evrp-tw-spd --problem ./data/akb_instances/c101C5.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 2
 
-valgrind --leak-check=full --track-origins=yes ./build/evrp-tw-spd --problem ./data/akb_instances/c101_21.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 5
+# valgrind --leak-check=full --track-origins=yes ./build/evrp-tw-spd --problem ./data/akb_instances/c101_21.txt --pruning --time 105 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 5
 
-valgrind --leak-check=full ./build/evrp-tw-spd --problem ./data/akb_instances/c101_21.txt --pruning --time 630 --runs 1 --g_1 40 --O_1_eval --two_opt --two_opt_star --or_opt 2 --two_exchange 2 --dummy_stations 5
+valgrind --leak-check=full ./build/evrp-tw-spd --problem ./data/akb_instances/c101_21.txt --pruning --time 630 --runs 1 --g_1 40 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 5
 
 ==1103194== Memcheck, a memory error detector
 ==1103194== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.

@@ -10,4 +10,4 @@
 #include "data.h"
 ILOSTLBEGIN
 
-void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix, bool& optimal);
+void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix);

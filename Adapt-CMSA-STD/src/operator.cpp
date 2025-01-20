@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -48,6 +49,12 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
 {
     // delta_value: EVRP-TW-SPD
     
+    if (int(data.small_opts[id].size() == 0))
+    {
+        printf("No small stepsize operator used, directly return.\n");
+        return;
+    }
+
     // record the best solution in the neighborhood of each small opt
 
     std::vector<Move> move_list(int(data.small_opts[id].size()));
@@ -59,7 +66,7 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
         move_list[i].delta_cost = double(INFINITY);
         auto &opt = data.small_opts[id][i];
         
-        //std::cout<<opt<<std::endl;
+        std::cout<<opt<<std::endl;
         
         if (opt == "relocation" || opt == "swap" || opt == "2opt")
         {
@@ -129,7 +136,8 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
 
             }             
             s.cost += min_delta_cost;
-            // printf("%.2lf\n", s.cost);        
+            
+            printf("%.2lf\n", s.cost);        
             base_cost = s.cost;
 
             // update move_list

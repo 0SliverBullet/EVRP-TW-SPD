@@ -92,18 +92,13 @@ int main(int argc, char **argv)
     parser.addArgument("--alpha_red", 1);
     parser.addArgument("--d_rate", 1);
     parser.addArgument("--h_rate", 1);
-    parser.addArgument("--n_a", 1);
-    parser.addArgument("--l_size", 1);
+    parser.addArgument("--init_n_a", 1);
+    parser.addArgument("--init_l_size", 1);
     parser.addArgument("--delta_n", 1);
     parser.addArgument("--delta_l_size", 1);
     parser.addArgument("--dummy_stations", 1);
 
     parser.addArgument("--O_1_eval");
-    // ---------------------
-    parser.addArgument("--two_opt_star");
-    parser.addArgument("--or_opt", 1);
-    parser.addArgument("--two_exchange", 1);
-    // ---------------------
 
     parser.addArgument("--relocation",1);
     parser.addArgument("--swap");
