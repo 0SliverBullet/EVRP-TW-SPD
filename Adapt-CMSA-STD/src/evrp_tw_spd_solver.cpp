@@ -81,12 +81,12 @@ int main(int argc, char **argv)
     // optional
     parser.addArgument("--pruning");
     parser.addArgument("--output", 1);
-    parser.addArgument("--time", 1);  // cpu_time_limit;
+    parser.addArgument("--time", 1);  // cpu time limit;
     parser.addArgument("--runs", 1);
     parser.addArgument("--g_1", 1);
 
     parser.addArgument("--t_prop", 1);
-    parser.addArgument("--t_ILP", 1);
+    parser.addArgument("--t_ILP", 1);  // cplex time limit
     parser.addArgument("--alpha_LB", 1);
     parser.addArgument("--alpha_UB", 1);
     parser.addArgument("--alpha_red", 1);
@@ -94,46 +94,25 @@ int main(int argc, char **argv)
     parser.addArgument("--h_rate", 1);
     parser.addArgument("--n_a", 1);
     parser.addArgument("--l_size", 1);
-    //parser.addArgument("--gamma", 1);
     parser.addArgument("--delta_n", 1);
     parser.addArgument("--delta_l_size", 1);
-    //parser.addArgument("--delta_gamma", 1);
-    //parser.addArgument("--infeasible_rate", 1);
     parser.addArgument("--dummy_stations", 1);
-    // parser.addArgument("--pop_size", 1);
-    // parser.addArgument("--init", 1);
-    // parser.addArgument("--k_init", 1);
-    // parser.addArgument("--no_crossover");
-    // parser.addArgument("--cross_repair", 1);
-    // parser.addArgument("--k_crossover", 1);
-    // parser.addArgument("--parent_selection", 1);
-    // parser.addArgument("--replacement", 1);
-    // parser.addArgument("--ls_prob", 1);
-    // parser.addArgument("--skip_finding_lo");
+
     parser.addArgument("--O_1_eval");
-    parser.addArgument("--two_opt");
+    // ---------------------
     parser.addArgument("--two_opt_star");
     parser.addArgument("--or_opt", 1);
     parser.addArgument("--two_exchange", 1);
-    // parser.addArgument("--elo", 1);
-    // parser.addArgument("--random_removal");
-    // parser.addArgument("--related_removal");
-    // parser.addArgument("--alpha", 1);
-    // parser.addArgument("--removal_lower", 1);
-    // parser.addArgument("--removal_upper", 1);
-    // parser.addArgument("--regret_insertion");
-    // parser.addArgument("--greedy_insertion");
-    // parser.addArgument("--rd_removal_insertion");
+    // ---------------------
+
+    parser.addArgument("--relocation",1);
+    parser.addArgument("--swap");
+    parser.addArgument("--two_opt");
+    parser.addArgument("--exchange_1_1", 1);
+    parser.addArgument("--shift_1_0", 1);
+
     parser.addArgument("--bks", 1);
     parser.addArgument("--random_seed", 1);
-
-    //parser.addArgument("--individual_search"); 
-    //parser.addArgument("--population_search"); 
-    //parser.addArgument("--parallel_insertion"); 
-    //parser.addArgument("--conservative_local_search"); 
-    //parser.addArgument("--aggressive_local_search"); 
-    //parser.addArgument("--station_range", 1); 
-    //parser.addArgument("--subproblem_range", 1); 
 
     // parse the command-line arguments - throws if invalid format
     parser.parse(argc, argv);

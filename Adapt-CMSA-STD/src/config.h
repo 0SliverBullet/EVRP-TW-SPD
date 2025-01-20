@@ -34,11 +34,27 @@ const bool DEFAULT_PRUNING = false;
 const double DEFAULT_LS_PROB = 1.0; //default local search probability
 const bool DEFAULT_O_1_EVAL = false;
 const bool DEFAULT_2_OPT_STAR = true;
-const bool DEFAULT_2_OPT = false;
+
 const bool DEFAULT_OR_OPT = false;
 const bool DEFAULT_2_EX = false;
-const int DEFAULT_OR_OPT_LEN = 3;
-const int DEFAUTL_EX_LEN = 2;
+
+const int DEFAULT_OR_OPT_LEN = 1;
+const int DEFAUTL_EX_LEN = 1;
+
+/** intra-route operators **/
+const bool DEFAULT_RELOCATION = true;
+const bool DEFAULT_SWAP = true;
+const bool DEFAULT_2_OPT = true;
+
+/** inter-route operators **/
+const bool DEFAULT_EXCHANHE_1_1 = true;
+const bool DEFAULT_SHIFT_1_0 = true;
+
+const int DEFAULT_RELOCATION_LEN = 1;
+const int DEFAULT_EXCHANHE_1_1_LEN = 1;
+const int DEFAULT_SHIFT_1_0_LEN = 1;
+
+
 const bool DEFAULT_SKIP_FINDING_LO = false; // if skip find_local_optima
 
 /* large neighborhood opts */

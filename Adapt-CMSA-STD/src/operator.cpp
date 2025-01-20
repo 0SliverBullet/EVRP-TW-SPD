@@ -5,6 +5,488 @@
 #include <string>
 #include <vector>
 
+// LocalSearch1: intra-route operators; LocalSearch2: inter-route operators
+//*************************************************************************************
+// for preventing memory allocation
+Move tmp_move;
+// map from string to opt;
+std::map<std::string, std::function<void(int, int, Solution&, Data&, Move&, double&)>>
+small_opt_map = {
+    {"relocation", relocation}, 
+    {"swap", exchange_swap},
+    {"2opt", two_opt},
+    {"exchange_1_1", exchange_1_1},
+    {"shift_1_0", shift_1_0}
+    };
+
+bool iscustomerlist(const std::vector<int>& s1, const std::vector<int>& s2) {
+
+    if (s1.empty()) return true;
+
+    size_t j = 0; 
+
+    for (size_t i = 0; i < s2.size(); ++i) {
+        if (s2[i] == s1[j]) {
+            ++j; 
+        }
+        if (j == s1.size()) {
+            return true; 
+        }
+    }
+    return false; 
+}
+
+void snippet(int r1, int r2, std::string &opt, Solution &s, Data &data, Move &target, double &base_cost)
+{
+    auto &m = data.get_mem(opt, r1, r2);
+    small_opt_map[opt](r1, r2, s, data, m, base_cost);
+    if (m.delta_cost - target.delta_cost < -PRECISION)
+        target = m;
+}
+
+void find_local_optima(Solution &s, Data &data, double base_cost, int id)
+{
+    // delta_value: EVRP-TW-SPD
+    
+    // record the best solution in the neighborhood of each small opt
+
+    std::vector<Move> move_list(int(data.small_opts[id].size()));
+
+    // find the best move for all sub-neighbors of each opt
+    int len = int(s.len());
+    for (int i = 0; i < int(move_list.size()); i++)
+    {
+        move_list[i].delta_cost = double(INFINITY);
+        auto &opt = data.small_opts[id][i];
+        
+        //std::cout<<opt<<std::endl;
+        
+        if (opt == "relocation" || opt == "swap" || opt == "2opt")
+        {
+            for (int r = 0; r < len; r++)
+            {
+                snippet(r, -1, opt, s, data, move_list[i], base_cost);
+            }
+        }
+        else if (opt == "exchange_1_1" || opt == "shift_1_0")
+        {
+            for (int r1 = 0; r1 < len; r1++)
+            {
+                for (int r2 = r1 + 1; r2 < len; r2++)
+                {
+                    snippet(r1, r2, opt, s, data, move_list[i], base_cost);
+                }
+            }
+        }
+        else
+        {
+            std::cout << "Unknown opt: " << opt;
+            exit(-1);
+        }
+    }
+
+    // double acc_delta_cost = 0;
+    std::vector<int> tour_id_array;
+    //std::vector<int> no_use;
+    while (true)
+    {
+        int best_index = -1;
+        double min_delta_cost = double(INFINITY);
+
+        //std::cout<<move_list.size()<<std::endl;
+
+        for (int i = 0; i < int(move_list.size()); i++)
+        {
+
+            if (move_list[i].delta_cost - min_delta_cost < -PRECISION)
+            {
+                
+                best_index = i;
+                min_delta_cost = move_list[i].delta_cost;
+            }
+        }
+        
+        if (min_delta_cost < -PRECISION)
+        {
+            // apply move
+            std::unordered_set<int> set = {0, 1};
+            tour_id_array = apply_move(s, move_list[best_index], data);
+            for (int j = 0; j < tour_id_array.size(); j++){
+                if (tour_id_array[j] >= s.len()) continue;
+                // s.get(tour_id_array[j]).customer_list = move_list[best_index].list[j];
+                // s.get(tour_id_array[j]).total_cost = move_list[best_index].total_cost[j];
+                for (int k = 0; k < 2; k++){  
+                    if (set.find(k) == set.end()) continue; 
+                    // if (std::find(move_list[best_index].list[k].begin(), move_list[best_index].list[k].end(), s.get(tour_id_array[j]).node_list[1]) != move_list[best_index].list[k].end())
+                    if (iscustomerlist(s.get(tour_id_array[j]).node_list, move_list[best_index].list[k]))
+                    {
+                        set.erase(k);
+                        s.get(tour_id_array[j]).customer_list = move_list[best_index].list[k];
+                        s.get(tour_id_array[j]).total_cost = move_list[best_index].total_cost[k];
+                        break;
+                    }
+                }
+
+            }             
+            s.cost += min_delta_cost;
+            // printf("%.2lf\n", s.cost);        
+            base_cost = s.cost;
+
+            // update move_list
+            int len = s.len();
+            for (int i = 0; i < int(move_list.size()); i++)
+            {
+                move_list[i].delta_cost = double(INFINITY);
+                auto &opt = data.small_opts[id][i];
+
+                //std::cout<<opt<<std::endl;
+
+                if (opt == "relocation" || opt == "swap" || opt == "2opt")
+                {
+                    for (auto &r : tour_id_array)
+                    {
+                        if (r >= len) continue;
+                        snippet(r, -1, opt, s, data, move_list[i], base_cost);
+                    }
+                    for (int r = 0; r < len; r++)
+                    {
+                        if (data.get_mem(opt, r, -1).delta_cost - move_list[i].delta_cost < -PRECISION)
+                            move_list[i] = data.get_mem(opt, r, -1);
+                    }
+                }
+                else if (opt == "exchange_1_1" || opt == "shift_1_0")
+                {
+                    for (auto &r : tour_id_array)
+                    {
+                        if (r >= len) continue;
+                        for (int r1 = 0; r1 < r; r1++)
+                        {
+                            snippet(r1, r, opt, s, data, move_list[i], base_cost);
+                        }
+                        for (int r1 = r+1; r1 < len; r1++)
+                        {
+                            snippet(r, r1, opt, s, data, move_list[i], base_cost);
+                        }
+                    }
+                    for (int r1 = 0; r1 < len; r1++)
+                    {
+                        for (int r2 = r1 + 1; r2 < len; r2++)
+                        {
+                            if (data.get_mem(opt, r1, r2).delta_cost - move_list[i].delta_cost < -PRECISION)
+                                move_list[i] = data.get_mem(opt, r1, r2);
+                        }
+                    }
+                }
+                else
+                {
+                    std::cout << "Unknown opt: " << opt;
+                    exit(-1);
+                }
+            }
+        }
+        else break;
+    }
+}
+
+void relocation(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost)
+{
+    m.delta_cost = double(INFINITY);
+    Route &r = s.get(r1);
+    auto &n_l = r.node_list;
+    int len = int(n_l.size());
+    if (len < 4) return;
+    for (int start = 1; start <= len - 2; start++)
+    {
+        // data.or_opt = 1 by default
+        for (int seq_len = 1; seq_len <= data.or_opt_len; seq_len++)
+        {
+            int end = start + seq_len - 1;
+            if (end >= len - 1) continue;
+            if (data.pruning &&
+                (!data.pm[n_l[start-1]][n_l[end+1]]))
+                continue;
+            // relocate to the same route
+            for (int pos = 1; pos <= start - 1; pos++)
+            {
+                if (data.pruning &&
+                    (!data.pm[n_l[pos-1]][n_l[start]] ||\
+                        !data.pm[n_l[end]][n_l[pos]]))
+                        continue;
+                tmp_move.r_indice[0] = r1;
+                tmp_move.r_indice[1] = -2;
+                tmp_move.len_1 = 4;
+                tmp_move.seqList_1[0] = {r1, 0, pos-1};
+                tmp_move.seqList_1[1] = {r1, start, end};
+                tmp_move.seqList_1[2] = {r1, pos, start-1};
+                tmp_move.seqList_1[3] = {r1, end+1, len-1};
+                tmp_move.len_2 = 0;
+                if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+                {
+                    m = tmp_move;
+                }
+            }
+            for (int pos = end + 2; pos <= len - 1; pos++)
+            {
+                if (data.pruning &&
+                    (!data.pm[n_l[pos-1]][n_l[start]] ||
+                        !data.pm[n_l[end]][n_l[pos]]))
+                    continue;
+                tmp_move.r_indice[0] = r1;
+                tmp_move.r_indice[1] = -2;
+                tmp_move.len_1 = 4;
+                tmp_move.seqList_1[0] = {r1, 0, start-1};
+                tmp_move.seqList_1[1] = {r1, end+1, pos-1};
+                tmp_move.seqList_1[2] = {r1, start, end};
+                tmp_move.seqList_1[3] = {r1, pos, len-1};
+                tmp_move.len_2 = 0;
+                if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+                {
+                    m = tmp_move;
+                }
+            }
+            // relocate to a new route
+            tmp_move.r_indice[0] = r1;
+            tmp_move.r_indice[1] = -1;
+            tmp_move.len_1 = 2;
+            tmp_move.seqList_1[0] = {r1, 0, start - 1};
+            tmp_move.seqList_1[1] = {r1, end + 1, len - 1};
+            tmp_move.len_2 = 3;
+            tmp_move.seqList_2[0] = {-1, data.DC, data.DC};
+            tmp_move.seqList_2[1] = {r1, start, end};
+            tmp_move.seqList_2[2] = {-1, data.DC, data.DC};
+            if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+            {
+                m = tmp_move;
+            }
+        }
+    }
+}
+void exchange_swap(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost){
+    m.delta_cost = double(INFINITY);
+    Route &r = s.get(r1);
+    auto &n_l = r.node_list;
+    int len = int(n_l.size());
+    if (len < 4) return;
+    for (int start1 = 1; start1 <= len -3; start1++){
+        for (int start2 = start1 + 1; start2 <= len -2; start2++){
+            if (start1 >= len -1 || start2 >= len -1) continue;
+            if (data.pruning &&
+                (!data.pm[n_l[start1-1]][n_l[start2]]||\
+                 !data.pm[n_l[start2]][n_l[start1+1]]||\
+                 !data.pm[n_l[start2-1]][n_l[start1]]||\
+                 !data.pm[n_l[start1]][n_l[start2+1]]))
+                continue;
+            if (start2 - start1 > 1){
+                tmp_move.r_indice[0] = r1;
+                tmp_move.r_indice[1] = -2;
+                tmp_move.len_1 = 5;
+                tmp_move.seqList_1[0] = {r1, 0, start1-1};
+                tmp_move.seqList_1[1] = {r1, start2, start2};
+                tmp_move.seqList_1[2] = {r1, start1+1, start2-1};
+                tmp_move.seqList_1[3] = {r1, start1, start1};
+                tmp_move.seqList_1[4] = {r1, start2+1, len-1};
+                tmp_move.len_2 = 0;
+                if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+                {
+                    m = tmp_move;
+                }
+            }
+            else{
+                tmp_move.r_indice[0] = r1;
+                tmp_move.r_indice[1] = -2;
+                tmp_move.len_1 = 4;
+                tmp_move.seqList_1[0] = {r1, 0, start1-1};
+                tmp_move.seqList_1[1] = {r1, start2, start2};
+                tmp_move.seqList_1[2] = {r1, start1, start1};
+                tmp_move.seqList_1[3] = {r1, start2+1, len-1};
+                tmp_move.len_2 = 0;
+                if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+                {
+                    m = tmp_move;
+                }
+
+            }
+
+            
+        }
+    }
+}
+
+void two_opt(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost)
+{
+    // inverse a 2-sequence in a route
+    m.delta_cost = double(INFINITY);
+
+    Route &r = s.get(r1);
+    auto &n_l = r.node_list; // customer
+    int len = int(n_l.size());
+    if (len < 5) return;
+    for (int start = 1; start <= len - 4; start++)
+    {
+        for (int seq_len = 3; seq_len <= len - 2; seq_len++)
+        {
+            // choose two non-adjacent nodes, avoid equivalent operation to `swap` when `seq_len = 2` 
+            int end = start + seq_len - 1;
+            if (end >= len - 1) continue;
+
+            bool valid = true;
+            if (data.pruning) {
+                if (!data.pm[n_l[start-1]][n_l[end]]) {
+                    valid = false;
+                }
+                for (int i = end; i > start; --i) {
+                    if (!data.pm[n_l[i]][n_l[i-1]]) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid && (!data.pm[n_l[start]][n_l[end+1]])) {
+                    valid = false;
+                }
+                if (!valid) {
+                    continue;
+                }
+            }
+
+            for (int i = end; i > start; --i) {
+                if (r.gat(i, i-1).num_cus == INFEASIBLE) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (!valid) {
+                continue;
+            }
+
+        tmp_move.r_indice[0] = r1;
+        tmp_move.r_indice[1] = -2;  // -2 表示没有使用 r2
+        tmp_move.len_1 = 3;
+        tmp_move.seqList_1[0] = {r1, 0, start-1};
+        tmp_move.seqList_1[1] = {r1, end, start};
+        tmp_move.seqList_1[2] = {r1, end+1, len-1};
+        tmp_move.len_2 = 0;
+        if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+        {
+            m = tmp_move;
+        }      
+        }
+    }
+}
+
+void exchange_1_1(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost){
+    m.delta_cost = double(INFINITY);
+    // exchange two sequences with seqs
+    Route &r_1 = s.get(r1);
+    auto &n_l_1 = r_1.node_list;
+    int len_1 = int(n_l_1.size());
+
+    Route &r_2 = s.get(r2);
+    auto &n_l_2 = r_2.node_list;
+    int len_2 = int(n_l_2.size());
+    for (int start_1 = 1; start_1 <= len_1 - 2; start_1++)
+    {
+        for (int seq_len_1 = 1; seq_len_1 <= data.exchange_1_1_len; seq_len_1++)
+        {
+            int end_1 = start_1 + seq_len_1 - 1;
+            if (end_1 >= len_1 - 1) continue;
+            for (int start_2 = 1; start_2 <= len_2 - 2; start_2++)
+            {
+                for (int seq_len_2 = 1; seq_len_2 <= data.exchange_1_1_len; seq_len_2++)
+                {
+                    int end_2 = start_2 + seq_len_2 - 1;
+                    if (end_2 >= len_2 - 1) continue;
+                    if (data.pruning &&
+                        (!data.pm[n_l_1[start_1-1]][n_l_2[start_2]] ||\
+                            !data.pm[n_l_2[end_2]][n_l_1[end_1+1]] ||\
+                            !data.pm[n_l_2[start_2-1]][n_l_1[start_1]] ||\
+                            !data.pm[n_l_1[end_1]][n_l_2[end_2+1]]))
+                        continue;
+                    tmp_move.r_indice[0] = r1;
+                    tmp_move.r_indice[1] = r2;
+                    tmp_move.len_1 = 3;
+                    tmp_move.seqList_1[0] = {r1, 0, start_1-1};
+                    tmp_move.seqList_1[1] = {r2, start_2, end_2};
+                    tmp_move.seqList_1[2] = {r1, end_1+1, len_1-1};
+                    tmp_move.len_2 = 3;
+                    tmp_move.seqList_2[0] = {r2, 0, start_2-1};
+                    tmp_move.seqList_2[1] = {r1, start_1, end_1};
+                    tmp_move.seqList_2[2] = {r2, end_2+1, len_2-1};
+                    if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+                    {
+                        m = tmp_move;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void shift_1_0(int r_index_1, int r_index_2, Solution &s, Data &data, Move &m, double &base_cost)
+{
+    m.delta_cost = double(INFINITY);
+    // relocate a sequence
+    for (int i = 0; i < 2; i++)
+    {
+        int r1, r2;
+        if (i == 0)
+        {
+            r1 = r_index_1;
+            r2 = r_index_2;
+        }
+        else if (i == 1)
+        {
+            r1 = r_index_2;
+            r2 = r_index_1;
+        }
+        Route &r = s.get(r1);
+        auto &n_l = r.node_list;
+        int len = int(n_l.size());
+        for (int start = 1; start <= len - 2; start++)
+        {
+            for (int seq_len = 1; seq_len <= data.shift_1_0_len; seq_len++)
+            {
+                int end = start + seq_len - 1;
+                if (end >= len - 1)
+                    continue;
+                if (data.pruning &&
+                    (!data.pm[n_l[start - 1]][n_l[end + 1]]))
+                    continue;
+                // relocate to other route
+
+                if (r1 == r2)
+                    continue;
+                Route &r_2 = s.get(r2);
+                auto &n_l_2 = r_2.node_list;
+                int len_2 = int(n_l_2.size());
+                for (int pos = 1; pos <= len_2 - 1; pos++)
+                {
+                    if (data.pruning &&
+                        (!data.pm[n_l_2[pos - 1]][n_l[start]] ||
+                         !data.pm[n_l[end]][n_l_2[pos]]))
+                        continue;
+                    tmp_move.r_indice[0] = r1;
+                    tmp_move.r_indice[1] = r2;
+                    tmp_move.len_1 = 2;
+                    tmp_move.seqList_1[0] = {r1, 0, start - 1};
+                    tmp_move.seqList_1[1] = {r1, end + 1, len - 1};
+                    tmp_move.len_2 = 3;
+                    tmp_move.seqList_2[0] = {r2, 0, pos - 1};
+                    tmp_move.seqList_2[1] = {r1, start, end};
+                    tmp_move.seqList_2[2] = {r2, pos, len_2 - 1};
+                    if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+                    {
+                        m = tmp_move;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// heuristic construction
+// ************************************************************************************
 // i是unrouted中的下标，node是要从unrouted移除的节点， index是unrouted的长度
 void maintain_unrouted(int i, int node, int &index, std::vector<std::tuple<int, int>> &unrouted, double &unrouted_d, double &unrouted_p, Data &data)
 {
@@ -98,9 +580,6 @@ void direct_routes_init(Solution &s, Data &data)
     s.update(data);
     s.cal_cost(data);
 }
-
-
-
 
 template <typename Tuple, size_t ProbIndex>
 Tuple select_tuple_from_Lr(const std::vector<Tuple>& Lr, double total_q, Data& data) {
@@ -803,3 +1282,4 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
     s.cal_cost(data);
     // s.output(data);
 }
+//*********************************************************************************************

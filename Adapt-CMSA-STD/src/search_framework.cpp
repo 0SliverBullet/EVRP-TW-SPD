@@ -109,7 +109,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
                 Solution s(data);
                 ProbabilisticSolutionConstruction(s, adjMatrix_tmp, data);
 
-                // LocalSearch(s, 1);
+                LocalSearch(s, data,1);
 
                 adjMatrix_s.assign(data.node_num, std::vector<int>(data.node_num, 0));
                 s.adjMatrixRepresentation(adjMatrix_s);
@@ -118,10 +118,11 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
             
             Solution s_cplex(data);
             double t_solve = 0.0;
+            bool optimal = false; // cplex.getCplexStatus() == IloCplex::Optimal ? true : false
 
-            SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
-
-            // LocalSearch(s_cplex, 2);
+            SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data, optimal); 
+            
+            if (!optimal) LocalSearch(s_cplex, data, 2);
 
             /* Adapt: alpha_bsf, n_a, l_size */
             if (t_solve < t_prop * t_ILP && data.alpha_bsf > alpha_LB) {
@@ -209,13 +210,7 @@ void GenerateGreedySolution(Solution &s, std::vector<std::vector<int>>& adjMatri
 }
 
 void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
-    double h_rate = data.h_rate;
-    // Initialize random number generator
-    static std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
-    std::uniform_real_distribution<double> dist(0.0, 1.0);
-
-    double r1 = dist(rng);
-    bool isCWsavings = (r1 <= h_rate);
+    bool isCWsavings = (rand(0.0, 1.0, data.rng) <= data.h_rate);
     if (isCWsavings) {
         printf("ProbabilisticClarkWrightSavings\n");
         ProbabilisticClarkWrightSavings(s, adjMatrix, data);
@@ -239,8 +234,18 @@ void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<in
     }    
 }
 
-void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data){
-    ILPmodel(s_cplex, t_solve, data, t_ILP, adjMatrix); // solve the ILP model to get the optimal solution
+void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data, bool& optimal){
+    ILPmodel(s_cplex, t_solve, data, t_ILP, adjMatrix, optimal); // solve the ILP model to get the optimal solution
+    int len = s_cplex.len();
+    for (int i = 0; i < len; i++){
+        Route& r = s_cplex.get(i);
+        std::vector<int>& nl = r.node_list;
+        for (int node: nl){
+            if (data.node[node].type == 2){
+                s_cplex.idle[node] = false;
+            }
+        }
+    }
 }
 
 void Initialize(Data& data){
@@ -253,8 +258,11 @@ void Increment(Data& data){
     data.l_size += data.delta_l_size;
 }
 
-void LocalSearch(Solution &s, int id){
-
+void LocalSearch(Solution &s, Data& data, int id){
+    printf("LocalSearch%d\n", id);
+    double base_cost = s.cost;
+    find_local_optima(s, data, base_cost, id-1);
+    printf("After LocalSearch%d: %.2lf", id, s.cost);
 }
 
 

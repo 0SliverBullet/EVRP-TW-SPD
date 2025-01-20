@@ -124,9 +124,12 @@ public:
 
     double ls_prob = DEFAULT_LS_PROB; //local search probability
     bool skip_finding_lo = DEFAULT_SKIP_FINDING_LO; // if skip finding_local_optima
+
     std::map<std::string, std::vector<Move>> mem;
-    bool two_opt = DEFAULT_2_OPT; // 2-opt
-    std::vector<Move> mem_2opt;
+
+    /************/
+    // bool two_opt = DEFAULT_2_OPT; // 2-opt
+    // std::vector<Move> mem_2opt;
     bool two_opt_star = DEFAULT_2_OPT_STAR; //2-opt*
     std::vector<Move> mem_2optstar;
     bool or_opt = DEFAULT_OR_OPT; // or-opt
@@ -137,7 +140,28 @@ public:
 
     int or_opt_len = DEFAULT_OR_OPT_LEN; //max length of seqs relocated by oropt
     int exchange_len = DEFAUTL_EX_LEN;   //max length of seqs exchanged
-    int subproblem_range = DEFAULT_SUBPROBLEM; // // BCD decomposition. `subproblem = 1` means no decomposition; otherwise, it indicates decomposition.
+    /************/
+    
+    /************/
+    bool relocation = DEFAULT_RELOCATION; // relocation
+    std::vector<Move> mem_relocation;
+    bool exchange_swap = DEFAULT_SWAP; // swap
+    std::vector<Move> mem_swap;    
+    bool two_opt = DEFAULT_2_OPT; // 2-opt
+    std::vector<Move> mem_2opt;
+    bool exchange_1_1 = DEFAULT_EXCHANHE_1_1; // exchange (1, 1)
+    std::vector<Move> mem_exchange_1_1;
+    bool shift_1_0 = DEFAULT_SHIFT_1_0; // shift (1, 0)
+    std::vector<Move> mem_shift_1_0;
+
+
+    int relocation_len = DEFAULT_RELOCATION_LEN; // max length of seqs relocated
+    int exchange_1_1_len = DEFAULT_EXCHANHE_1_1_LEN; // max length of seqs exchanged
+    int shift_1_0_len = DEFAULT_SHIFT_1_0_LEN; // max length of seqs shifted
+    /************/
+
+
+    int subproblem_range = DEFAULT_SUBPROBLEM; // `subproblem = 1` means no decomposition; otherwise, it indicates decomposition.
     
     int escape_local_optima = DEFAULT_ELO;            // number of times of escaping local optima
     double destroy_ratio_l = DEFAULT_DESTROY_RATIO_L; //customers to be delete in recombination
@@ -177,7 +201,7 @@ public:
     int l_size = DEFAULT_L_SIZE;     
 
 
-    std::vector<std::string> small_opts;
+    std::vector<std::vector<std::string>> small_opts;
     std::vector<std::string> destroy_opts;
     std::vector<std::string> repair_opts;
 

@@ -13,10 +13,10 @@ struct Move
 {
     // -1: means a new route, -2 means not used
     int r_indice[2] = {-2, -2};
-    Seq seqList_1[4];
+    Seq seqList_1[5];
     // 0: means invalid, -1 means infeasible
     int len_1 = 0;
-    Seq seqList_2[4];
+    Seq seqList_2[5];
     int len_2 = 0;
     double delta_cost = double(INFINITY); // the smaller, the better
     std::vector<double> total_cost = std::vector<double>(2, 0.0);

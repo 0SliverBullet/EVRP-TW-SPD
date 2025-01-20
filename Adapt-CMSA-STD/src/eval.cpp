@@ -435,3 +435,197 @@ double criterion_customer(Route &r, Data &data, int node, int pos, std::vector<s
 }
 
 
+std::vector<int> apply_move(Solution &s, Move &m, Data data)
+{
+    std::vector<int> r_indice;
+    r_indice.push_back(m.r_indice[0]);
+    if (m.r_indice[1] != -2)
+        r_indice.push_back(m.r_indice[1]);
+
+    // handle the first route
+    if (r_indice[0] == -2 || r_indice[0] == -1)
+    {
+        printf("Error: detect -1 or -2 in r_indice[0] in move\n");
+        exit(-1);
+    }
+    Route &r = s.get(r_indice[0]);
+    std::vector<int> target_n_l;
+    target_n_l.reserve(MAX_NODE_IN_ROUTE);
+
+    for (int i = 0; i < m.len_1; i++)
+    {
+        auto &seq = m.seqList_1[i];
+        auto &source_n_l = s.get(seq.r_index).node_list;
+        if (seq.start_point <= seq.end_point)
+        {
+            for (int index = seq.start_point; index <= seq.end_point; index++)
+                {target_n_l.push_back(source_n_l[index]);}
+        }
+        else
+        {
+            for (int index = seq.start_point; index >= seq.end_point; index--)
+            {
+                target_n_l.push_back(source_n_l[index]);
+            }
+        }
+    }
+
+    // handle the second route
+    if (int(r_indice.size()) == 2)
+    {
+        std::vector<int> target_n_l_2;
+        target_n_l_2.reserve(MAX_NODE_IN_ROUTE);
+
+        for (int i = 0; i < m.len_2; i++)
+        {
+            auto &seq = m.seqList_2[i];
+            if (seq.r_index == -1)
+            {
+                target_n_l_2.push_back(data.DC);
+                continue;
+            }
+            auto &source_n_l = s.get(seq.r_index).node_list;
+            if (seq.start_point <= seq.end_point)
+            {
+                for (int index = seq.start_point; index <= seq.end_point; index++)
+                {
+                    target_n_l_2.push_back(source_n_l[index]);
+                }
+            }
+            else
+            {
+                for (int index = seq.start_point; index >= seq.end_point; index--)
+                {
+                    target_n_l_2.push_back(source_n_l[index]);
+                }
+            }
+        }
+        if (r_indice[1] == -1)
+        {
+            Route r(data);
+            r.node_list = target_n_l_2;
+            r.update(data);
+            s.append(r);
+            r_indice[1] = s.len() - 1;
+        }
+        else
+        {
+            Route &r = s.get(r_indice[1]);
+            r.node_list = target_n_l_2;
+            r.update(data);
+        }
+    }
+    // set node list only at the end
+    r.node_list = target_n_l;
+    r.update(data);
+
+    s.local_update(r_indice);
+    return r_indice;
+}
+
+
+bool eval_route(Solution &s, Seq *seqList, int seqListLen, Attr &tmp_attr, Data &data)
+{
+    const Attr &attr_1 = seqList[0].r_index == -1 ? attr_for_one_node(data, seqList[0].start_point) : s.get(seqList[0].r_index).gat(seqList[0].start_point, seqList[0].end_point);
+
+    const Attr &attr_2 = seqList[1].r_index == -1 ? attr_for_one_node(data, seqList[1].start_point) : s.get(seqList[1].r_index).gat(seqList[1].start_point, seqList[1].end_point);
+
+    if ((!check_tw(attr_1, attr_2, data)) || (!check_capacity(attr_1, attr_2, data)))
+        return false;
+    connect(attr_1, attr_2, tmp_attr, data.dist[attr_1.e][attr_2.s], data.time[attr_1.e][attr_2.s]);
+
+    for (int i = 2; i < seqListLen; i++)
+    {
+        const Attr &attr = seqList[i].r_index == -1 ? attr_for_one_node(data, seqList[i].start_point) : s.get(seqList[i].r_index).gat(seqList[i].start_point, seqList[i].end_point);
+
+        if ((!check_tw(tmp_attr, attr, data)) || (!check_capacity(tmp_attr, attr, data)))
+            return false;
+        connect(tmp_attr, attr, data.dist[tmp_attr.e][attr.s], data.time[tmp_attr.e][attr.s]);
+    }
+    return true;
+}
+
+// to be checked
+bool eval_move(Solution &s, Move &m, Data &data, double &base_cost)
+{
+    std::vector<int> r_indice;
+    r_indice.push_back(m.r_indice[0]);
+    if (m.r_indice[1] != -2)
+        r_indice.push_back(m.r_indice[1]);
+    double ori_cost = s.get(r_indice[0]).cal_cost(data);
+
+    /* eval the connection of the seqeunces in m */
+    // auto start = high_resolution_clock::now();
+
+    Attr tmp_attr_1;
+    if (!eval_route(s, m.seqList_1, m.len_1, tmp_attr_1, data))
+        return false;
+    double new_cost = 0.0;
+    if (tmp_attr_1.num_cus != 0)
+        new_cost += data.vehicle.d_cost + tmp_attr_1.dist * data.vehicle.unit_cost;
+    if (int(r_indice.size()) == 2)
+    {
+        Attr tmp_attr_2;
+        if (!eval_route(s, m.seqList_2, m.len_2, tmp_attr_2, data))
+            return false;
+        if (r_indice[1] != -1)
+            ori_cost += s.get(r_indice[1]).cal_cost(data);
+        if (tmp_attr_2.num_cus != 0)
+            new_cost += data.vehicle.d_cost + tmp_attr_2.dist * data.vehicle.unit_cost;
+    }
+    m.delta_cost = new_cost - ori_cost;
+
+    if (m.delta_cost < -PRECISION) {
+
+        if (base_cost == -1) return true; //use Aggressive Local Search (ALS) 
+
+        //else use Conservative Local Search
+           
+        Solution item = s;
+        std::vector<int> tour_id_array;
+        //clock_t stime1 = clock();
+        tour_id_array = apply_move(item, m, data);
+        //double used_sec1 = (clock() - stime1) / (CLOCKS_PER_SEC*1.0);
+        //printf("time: %.10lf sec\n", used_sec1);
+        double ori_cost = s.get(m.r_indice[0]).total_cost;
+        if (m.r_indice[1] >= 0) ori_cost += s.get(m.r_indice[1]).total_cost;
+        double new_cost = 0.0;
+        std::vector<std::pair<int,int>> station_insert_pos;
+        station_insert_pos.reserve(MAX_NODE_IN_ROUTE);  // 一条route的充电站备选插入位置
+
+        for (auto j: tour_id_array) {
+                if (j >= item.len()) {
+                    if (m.r_indice[0] < item.len() && m.r_indice[1] < item.len()) ori_cost += s.get(j).total_cost;
+                    continue;
+                }
+                Route r= item.get(j);
+                std::swap(r.node_list, r.customer_list);
+                r.temp_node_list = r.customer_list;
+                int flag = 0;
+                double cost = 0.0;
+                int index_negtive_first = -1;
+                update_route_status(r.temp_node_list,r.status_list,data,flag,cost,index_negtive_first); 
+                //printf("route: %d, %d\n", j, flag);
+                if (flag == 0 || flag == 2 || flag == 3) return false;
+                if (flag == 1) { item.get(j).total_cost = item.get(j).cal_cost(data); }
+                station_insert_pos.clear();
+                if (flag == 4 && ! sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, cost, item)) return false;
+                new_cost += item.get(j).total_cost;
+        } 
+
+        m.delta_cost = new_cost - ori_cost;
+        // printf("2: %.2lf \n", m.delta_cost);
+        if (m.delta_cost > -PRECISION){
+            return false;
+        }
+        for (int j = 0; j < tour_id_array.size(); j++){
+                if (tour_id_array[j] >= item.len()) continue;
+                m.list[j] = item.get(tour_id_array[j]).node_list;
+                m.total_cost[j] = item.get(tour_id_array[j]).total_cost;
+        }        
+        return true;
+    }
+    return false;
+}
+
+

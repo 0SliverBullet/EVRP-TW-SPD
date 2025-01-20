@@ -56,7 +56,8 @@ Data::Data(ArgumentParser &parser)
         else if (results[0] == "VEHICLES")
         {
             printf("%s\n", line.c_str());
-            this->vehicle.max_num = stoi(results[1]) + V_NUM_RELAX;
+            // this->vehicle.max_num = stoi(results[1]) + V_NUM_RELAX;
+            this->vehicle.max_num = stoi(results[1]) * 2; 
         }
         else if (results[0] == "DISPATCHINGCOST")
         {
@@ -718,54 +719,69 @@ Data::Data(ArgumentParser &parser)
     else
         printf("O(1) evaluation: off");
 
+
+    small_opts.resize(2); // small_opts[0]: intra-route operators; small_opts[1]: inter-route operators.
+
+    if (parser.exists("relocation"))
+    {
+        printf("relocation: on\n");
+        this->relocation = true;
+        this->relocation_len = std::stoi(parser.retrieve<std::string>("relocation"));
+        small_opts[0].push_back("relocation");
+        std::vector<Move> tmp_mem(this->vehicle.max_num);
+        mem.insert(std::pair<std::string, std::vector<Move>>("relocation", tmp_mem));
+    }
+    else
+        printf("relocation: off\n");
+
+    if (parser.exists("swap"))
+    {
+        printf("swap: on\n");
+        this->exchange_swap = true;
+        small_opts[0].push_back("swap");
+        std::vector<Move> tmp_mem(this->vehicle.max_num);
+        mem.insert(std::pair<std::string, std::vector<Move>>("swap", tmp_mem));
+    }
+    else
+        printf("swap: off\n");
+
+
     if (parser.exists("two_opt"))
     {
         printf("2-opt: on\n");
         this->two_opt = true;
-        small_opts.push_back("2opt");
+        small_opts[0].push_back("2opt");
         std::vector<Move> tmp_mem(this->vehicle.max_num);
         mem.insert(std::pair<std::string, std::vector<Move>>("2opt", tmp_mem));
     }
     else
         printf("2-opt: off\n");
 
-    if (parser.exists("two_opt_star"))
-    {
-        printf("2-opt*: on\n");
-        this->two_opt_star = true;
-        small_opts.push_back("2opt*");
-        std::vector<Move> tmp_mem(this->vehicle.max_num * this->vehicle.max_num);
-        mem.insert(std::pair<std::string, std::vector<Move>>("2opt*", tmp_mem));
-    }
-    else
-        printf("2-opt*: off\n");
 
-    if (parser.exists("or_opt"))
+    if (parser.exists("exchange_1_1"))
     {
-        printf("or-opt: on\n");
-        this->or_opt = true;
-        this->or_opt_len = std::stoi(parser.retrieve<std::string>("or_opt"));
-        small_opts.push_back("oropt_single");
-        small_opts.push_back("oropt_double");
-        std::vector<Move> tmp_mem_0(this->vehicle.max_num);
-        std::vector<Move> tmp_mem_1(this->vehicle.max_num * this->vehicle.max_num);
-        mem.insert(std::pair<std::string, std::vector<Move>>("oropt_single", tmp_mem_0));
-        mem.insert(std::pair<std::string, std::vector<Move>>("oropt_double", tmp_mem_1));
-    }
-    else
-        printf("or-opt: off\n");
-
-    if (parser.exists("two_exchange"))
-    {
-        printf("2-exchange: on\n");
-        this->two_exchange = true;
-        this->exchange_len = std::stoi(parser.retrieve<std::string>("two_exchange"));
-        small_opts.push_back("2exchange");
+        printf("exchange (1, 1): on\n");
+        this->exchange_1_1 = true;
+        this->exchange_1_1_len = std::stoi(parser.retrieve<std::string>("exchange_1_1"));
+        small_opts[1].push_back("exchange_1_1");
         std::vector<Move> tmp_mem(this->vehicle.max_num * this->vehicle.max_num);
-        mem.insert(std::pair<std::string, std::vector<Move>>("2exchange", tmp_mem));
+        mem.insert(std::pair<std::string, std::vector<Move>>("exchange_1_1", tmp_mem));
     }
     else
-        printf("2-exchange: off\n");
+        printf("exchange (1, 1): off\n");
+
+    if (parser.exists("shift_1_0"))
+    {
+        printf("shift (1, 0): on\n");
+        this->shift_1_0 = true;
+        this->shift_1_0_len = std::stoi(parser.retrieve<std::string>("shift_1_0"));
+        small_opts[1].push_back("shift_1_0");
+        std::vector<Move> tmp_mem(this->vehicle.max_num * this->vehicle.max_num);
+        mem.insert(std::pair<std::string, std::vector<Move>>("shift_1_0", tmp_mem));
+    }
+    else
+        printf("shift (1, 0): off\n");
+
 
     if (parser.exists("bks"))
         this->bks = std::stod(parser.retrieve<std::string>("bks"));
@@ -784,16 +800,6 @@ Data::Data(ArgumentParser &parser)
         {this->pm[i][j] = true;}
     }
     this->pre_processing();
-
-    // print dummy station 
-    // for (int i = 0; i < this->node_num; i++){
-    //     for (int j = 0; j < this->node_num; j++){
-    //         printf("%.2lf ", this->dist[i][j]);
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
-    // exit(0);
 }
 
 void Data::pre_processing()

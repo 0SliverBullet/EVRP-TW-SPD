@@ -25,3 +25,16 @@
 
 void ProbabilisticClarkWrightSavings(Solution &s, std::vector<std::vector<int>>& adjMatrix,Data &data);
 void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data);
+void find_local_optima(Solution &s, Data &data, double base_cost, int id);
+
+void two_opt(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+void two_opt_star(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+void or_opt_single(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+void or_opt_double(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+void two_exchange(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+
+void relocation(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+void exchange_swap(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+// void two_opt(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+void exchange_1_1(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);
+void shift_1_0(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost);

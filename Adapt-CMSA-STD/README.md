@@ -187,5 +187,5 @@ valgrind --version
 - [X] make sure that each dummy station is used at most once
 - [X] pay attention to memory manage
 - [ ] check that each dummy station is used at most once
-- [X] should s_cplex.idle be updated? Not Necessary!
+- [X] should s_cplex.idle be updated? Necessary! See in Function "SolveSubinstance"
 
