@@ -1174,6 +1174,11 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
 
         r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
         r.temp_node_list.insert(r.temp_node_list.begin() + 1, first_node);  // 尝试在备份插入第一个customer, 从第二个位置开始插入
+
+//         r.node_list = {0, 5, 3, 2, 4, 1, 0};
+// //      r.node_list = {0, 5, 6, 3, 2, 9, 4, 6, 1, 0};
+//         r.temp_node_list = r.node_list;
+
         flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
         update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
 
@@ -1191,6 +1196,9 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
         }
         // 电量不足，尝试插入充电站
         // 经过上面的操作，r.temp_node_list 已经插入了第一个customer，且满足容量、时间窗、电量约束
+
+        // printf("Success\n");
+        // exit(0);
 
         maintain_unrouted(selected, first_node, index, unrouted, unrouted_d, unrouted_p, data);  // 从 unrouted 中移除即将插入的 customer
         unrouted_flag[first_node] = false;  // 标记已经插入的 customer
