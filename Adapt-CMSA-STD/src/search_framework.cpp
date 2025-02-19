@@ -83,6 +83,9 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
         GenerateGreedySolution(s_bsf, adjMatrix, data);
         used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
         printf("cost %.2lf, already consumed %.2lf sec\n", s_bsf.cost, used_sec); 
+
+        // exit(0);
+
         double cost_in_this_run = s_bsf.cost;
         /* ------------------------------ */
 
@@ -158,7 +161,6 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
 
             if (iter % OUTPUT_PER_GENS == 0)
             {
-                printf("Iter: %d. ", iter);
                 // output(pop, pop_fit, pop_argrank, data);
                 printf("Iter %d done, no improvement for %d iters, already consumed %.2lf sec\n", iter, no_improve, used_sec);
             }
@@ -195,7 +197,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
     // check if feasible, then save best solution and run time in file
     printf("Total %d runs, total consumed %.2lf sec\n", run-1, time_all_run);
     
-    // write_solution_to_file(data, best_s, run, solutions, times, cost_all_run, time_all_run);
+    write_solution_to_file(data, best_s, run, solutions, times, cost_all_run, time_all_run);
     // exit(0);
 
 }
@@ -204,15 +206,48 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
 */
 
 void GenerateGreedySolution(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
-    ProbabilisticInsertion(s, adjMatrix, data);
+    Solution s_tmp(data);
+    const int max_attempts = 100;
+    int attempts = 0;
+
+    while (!ProbabilisticInsertion(s_tmp, adjMatrix, data) && attempts < max_attempts) {
+        s_tmp = Solution(data);
+        ++attempts;
+    }
+
+    if (attempts < max_attempts) {
+        s = std::move(s_tmp);
+    } else {
+        std::cerr << "Warning: ProbabilisticInsertion exceeded max attempts." << std::endl;
+    }
+
+    // Solution s_tmp(data);
+    // while (!ProbabilisticInsertion(s_tmp, adjMatrix, data)) {
+    //     s_tmp = Solution(data);
+    // }
+    // s = s_tmp;
+    // ProbabilisticInsertion(s, adjMatrix, data);
     // ProbabilisticClarkWrightSavings(s, adjMatrix, data);
 }
 
 void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
+    Solution s_tmp(data);
+    const int max_attempts = 100;
+    int attempts = 0;
     bool isCWsavings = (rand(0.0, 1.0, data.rng) <= data.h_rate);
     if (isCWsavings) {
         printf("ProbabilisticClarkWrightSavings\n");
-        ProbabilisticClarkWrightSavings(s, adjMatrix, data);
+        while (!ProbabilisticClarkWrightSavings(s_tmp, adjMatrix, data) && attempts < max_attempts) {
+            s_tmp = Solution(data);
+            ++attempts;
+        }
+
+        if (attempts < max_attempts) {
+            s = std::move(s_tmp);
+        } else {
+            std::cerr << "Warning: ProbabilisticClarkWrightSavings exceeded max attempts." << std::endl;
+        }
+        // ProbabilisticClarkWrightSavings(s, adjMatrix, data);
         /* 
             the C&W savings heuristic
                 Clarke, G., & Wright, J. W. (1964). Scheduling of vehicles from a central depot to a number of delivery points. 
@@ -221,7 +256,17 @@ void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>
     } 
     else {
         printf("ProbabilisticInsertion\n");
-        ProbabilisticInsertion(s, adjMatrix, data);
+        while (!ProbabilisticInsertion(s_tmp, adjMatrix, data) && attempts < max_attempts) {
+            s_tmp = Solution(data);
+            ++attempts;
+        }
+
+        if (attempts < max_attempts) {
+            s = std::move(s_tmp);
+        } else {
+            std::cerr << "Warning: ProbabilisticInsertion exceeded max attempts." << std::endl;
+        }
+        //ProbabilisticInsertion(s, adjMatrix, data);
     } 
 }
 

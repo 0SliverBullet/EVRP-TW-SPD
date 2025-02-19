@@ -5,7 +5,7 @@
 #include <vector>
 
 void chk_nl_node_pos_O_n(std::vector<int> &nl, int inserted_node, int pos, Data &data, int &flag, double &cost)
-{   // suppose insert into the pos
+{   // suppose insert "statioin/customer" into the pos
     // also check battery constrain
     int len = int(nl.size());
     double capacity = data.vehicle.capacity;
@@ -114,7 +114,31 @@ void chk_nl_node_pos_O_n(std::vector<int> &nl, int inserted_node, int pos, Data 
                         min_remain_time -= additional_charge_time;
                 }             
                 if (data.node[inserted_node].end - move_time < -PRECISION){
-                flag = 3; return;
+                    //flag = 3; return;
+                    /*
+                    inverse the move_time to the last station
+                    */                   
+                    move_time = data.node[inserted_node].end;
+                    move_time -= data.time[nl[j-1]][inserted_node];
+
+                    int k = j;
+
+                    while (data.node[nl[k-1]].type == 1){
+                        k--;
+                        move_time -= data.node[nl[k]].s_time;
+                        move_time -= data.time[nl[k-1]][nl[k]];
+                        
+                    } 
+                    // move_time -= data.time[nl[k-1]][nl[k]];
+                    if (move_time - time < -PRECISION){
+                        flag = 3;
+                        return;
+                    }
+                    else{
+                        max_recharge_time = move_time - time;
+                        break;
+                    }
+
                 }      
                 min_remain_time = std::min (min_remain_time, data.node[inserted_node].end-move_time);
                 if (min_remain_time == 0) break;
@@ -132,7 +156,47 @@ void chk_nl_node_pos_O_n(std::vector<int> &nl, int inserted_node, int pos, Data 
                         min_remain_time -= additional_charge_time;
                 }       
                 if (data.node[nl[j]].end - move_time < -PRECISION){
-                flag = 3; return;
+                    // flag = 3; return;
+                    /*
+                    inverse the move_time to the last station
+                    */                   
+                    move_time = data.node[nl[j]].end;
+                    move_time -= data.time[inserted_node][nl[j]];
+                    // move_time -= data.time[nl[k-1]][nl[k]];
+                    if (data.node[inserted_node].type == 2){
+                        if (move_time - time < -PRECISION){
+                            flag = 3;
+                            return;
+                        }
+                        else{
+                            max_recharge_time = move_time - time;
+                            break;
+                        }
+                    }
+                    else{
+                        move_time -= data.node[inserted_node].s_time;
+                        move_time -= data.time[nl[j-1]][inserted_node];
+
+                        int k = j;
+
+                        while (data.node[nl[k-1]].type == 1){
+                            k--;
+                            move_time -= data.node[nl[k]].s_time;
+                            move_time -= data.time[nl[k-1]][nl[k]];
+                            
+                        } 
+                        // move_time -= data.time[nl[k-1]][nl[k]];
+                        if (move_time - time < -PRECISION){
+                            flag = 3;
+                            return;
+                        }
+                        else{
+                            max_recharge_time = move_time - time;
+                            break;
+                        }
+                    }
+
+
                 }            
                 min_remain_time = std::min (min_remain_time, data.node[nl[j]].end-move_time);
                 if (min_remain_time == 0) break;
@@ -148,7 +212,60 @@ void chk_nl_node_pos_O_n(std::vector<int> &nl, int inserted_node, int pos, Data 
                         min_remain_time -= additional_charge_time;
                 }            
                 if (data.node[nl[j]].end - move_time < -PRECISION){
-                    flag = 3; return;
+                    // flag = 3; return;
+                    /*
+                    inverse the move_time to the last station
+                    */                   
+                    move_time = data.node[nl[j]].end;
+                    int k = j;
+
+                    while (k != pos && data.node[nl[k-1]].type == 1){
+                        k--;
+                        move_time -= data.time[nl[k]][nl[k+1]];
+                        move_time -= data.node[nl[k]].s_time;
+                    } 
+                    if (k == pos){
+
+                        move_time -= data.time[inserted_node][nl[k]];
+
+                        if (data.node[inserted_node].type == 2){
+                            
+                        }
+                        else{
+                            move_time -= data.node[inserted_node].s_time;
+                            move_time -= data.time[nl[k-1]][inserted_node];
+
+                            while (data.node[nl[k-1]].type == 1){
+                                k--;
+                                move_time -= data.node[nl[k]].s_time;
+                                move_time -= data.time[nl[k-1]][nl[k]];
+                                
+                            } 
+                            // move_time -= data.time[nl[k-1]][nl[k]];
+                            if (move_time - time < -PRECISION){
+                                flag = 3;
+                                return;
+                            }
+                            else{
+                                max_recharge_time = move_time - time;
+                                break;
+                            }
+                        }
+                        
+                    }
+                    else {
+
+                        move_time -= data.time[nl[k-1]][nl[k]];
+                    }
+                    // move_time -= data.time[nl[k-1]][nl[k]];
+                    if (move_time - time < -PRECISION){
+                        flag = 3;
+                        return;
+                    }
+                    else{
+                        max_recharge_time = move_time - time;
+                        break;
+                    }
                 }       
                 min_remain_time = std::min (min_remain_time, data.node[nl[j]].end-move_time);
                 if (min_remain_time == 0) break;  //扫描结束时 min_remain_time 可能 > 0
@@ -248,7 +365,27 @@ void update_route_status(std::vector<int> &nl, std::vector<status> &sl, Data &da
                     min_remain_time -= additional_charge_time;
             }
             if (data.node[nl[j]].end - move_time < -PRECISION){
-                flag = 3; return;
+                // flag = 3; return;
+                /*
+                inverse the move_time to the last station
+                */
+                move_time = data.node[nl[j]].end;
+                int k = j;
+                while (data.node[nl[k-1]].type == 1){
+                    k--;
+                    move_time -= data.time[nl[k]][nl[k+1]];
+                    move_time -= data.node[nl[k]].s_time;
+                } 
+                move_time -= data.time[nl[k-1]][nl[k]];
+                if (move_time - sl[i].arr_time < -PRECISION){
+                    flag = 3;
+                    return;
+                }
+                else{
+                    max_recharge_time = move_time - sl[i].arr_time;
+                    break;
+                }
+
             }             
             min_remain_time = std::min (min_remain_time, data.node[nl[j]].end-move_time);
             if (min_remain_time == 0 ) break;
@@ -282,6 +419,7 @@ bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<in
             // for (int i = data.customer_num+1; i <= data.customer_num + data.station_num; i++){
             for (int j = 0; j <data.station_range; j++){
             int i = data.optimal_staion[r.temp_node_list[pos-1]][r.temp_node_list[pos]][j];
+            // optimization:
             int flag = 0;
             double cost = -1.0;
             //过滤掉那些不能走到充电站的点, 不能从同一个充电站走到自己
@@ -303,9 +441,15 @@ bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<in
             //     || (data.node[r.temp_node_list[pos]].type == 0 && data.dist[i][r.temp_node_list[pos]] == 0)) {
                 flag = 0;
                 }  
+                // else {
+                //     Route route = r;
+                //     int tmp_index_negtive_first = -1;
+                //     route.temp_node_list.insert(route.temp_node_list.begin() + pos, i);
+                //     update_route_status(route.temp_node_list, route.status_list, data, flag, cost, tmp_index_negtive_first); 
+                // }
                 else chk_nl_node_pos_O_n(r.temp_node_list, i, pos, data, flag, cost);  //检查capacity、time window、battery是否满足约束
             }
-            
+
             if (flag == 1) {
                 feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 1;
                 count1++;
@@ -317,9 +461,10 @@ bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<in
             }            
           }
     }
+    // printf("%d\n", count1 + count4);
     if (count1 + count4 ==0) return false;
     if (count1 == 0) relax = 4;
-    // insertion criterion RDPD
+
     if (type ==false) {
             for (int i = data.customer_num+1; i <= data.customer_num + data.station_num; i++)
             {
@@ -384,11 +529,11 @@ bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r,
             // -----------------------------------
             int path_len = index_negtive_first - index_last_f0;
             if (data.station_num <= path_len){
-                station_pos_num = data.station_num;
+                station_pos_num = data.station_num;   // 在所有的station中选一个最好的station插入对应的最好位点
                 station_pos_type = false; 
             }
             else{
-                station_pos_num = path_len;
+                station_pos_num = path_len;     // 在所有的位点中选一个最好的位点插入对应TD最小的station
                 station_pos_type = true;
             }
             std::vector<int> station_pos(station_pos_num);
@@ -403,7 +548,7 @@ bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r,
             int i = 1;
             for (; i < station_pos_num; i++)
             {
-                if (std::abs(best_score - score[score_argrank[i]]) < -PRECISION)
+                if (std::abs(best_score - score[score_argrank[i]]) < PRECISION)
                     ties[i] = score_argrank[i];
                 else
                     break;
@@ -442,13 +587,14 @@ bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r,
             // for (int vertex: r.temp_node_list){
             //     printf("%d ", vertex);
             // }
-            // printf("\n");
+            // printf(", %d\n", index_negtive_first);
 
             // printf("flag: %d\n",flag);
             // for (int i=0; i<r.temp_node_list.size(); i++){
             //    printf("%d: <%.4lf, %.4lf, %.4lf, %.4lf>, ", r.temp_node_list[i], r.status_list[i].arr_time, r.status_list[i].dep_time, r.status_list[i].arr_RD, r.status_list[i].dep_RD);
             // }
             // printf("\n");
+            
             }
             else{ //没有可行的插入充电站解决，回溯撤销添加customer, 对于first customer不可能出现
             break;
@@ -462,11 +608,11 @@ bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r,
         // 撤销 idle 标记   
 
         if (flag==1) {
-        return true;
+            return true;
         }
         else{
-        heuristic_cost = double(INFINITY);
-        return false;
+            heuristic_cost = double(INFINITY);
+            return false;
         }
 }
 
@@ -689,7 +835,7 @@ bool eval_move(Solution &s, Move &m, Data &data, double &base_cost)
             }
             Route r = item.get(j); // *** 注意这里不是引用类型 ***
             std::swap(r.node_list, r.customer_list);  
-            r.temp_node_list = r.customer_list; // node_list 含有充电站, customer_list 不含充电站
+            r.temp_node_list = r.customer_list; // 交换后 node_list 含有充电站, customer_list 不含充电站
 
             // *** 暂时取下充电站 ***
             for (int node: r.node_list){

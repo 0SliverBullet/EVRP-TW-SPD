@@ -66,7 +66,7 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
         move_list[i].delta_cost = double(INFINITY);
         auto &opt = data.small_opts[id][i];
         
-        std::cout<<opt<<std::endl;
+        // std::cout<<opt<<std::endl;
         
         if (opt == "relocation" || opt == "swap" || opt == "2opt")
         {
@@ -134,7 +134,7 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
                     }
                 }
 
-            }             
+            }
             s.cost += min_delta_cost;
             
             printf("%.2lf\n", s.cost);        
@@ -142,6 +142,20 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
 
             // update move_list
             int len = s.len();
+
+            for (int node = data.customer_num+1; node <= data.customer_num + data.station_num; node++){
+                s.idle[node] = true;
+            }
+            for (int i = 0; i < len; i++){
+                Route& r = s.get(i);
+                for (int node: r.customer_list){
+                    if (data.node[node].type == 2){
+                        s.idle[node] = false;
+                    }
+                }
+            }
+
+
             for (int i = 0; i < int(move_list.size()); i++)
             {
                 move_list[i].delta_cost = double(INFINITY);
@@ -584,6 +598,10 @@ void direct_routes_init(Solution &s, Data &data)
         }
 
         s.append(r);
+        // for (int node: r.node_list){
+        //     printf("%d, ", node);
+        // }
+        // printf("\n");
     }
     s.update(data);
     s.cal_cost(data);
@@ -601,6 +619,20 @@ Tuple select_tuple_from_Lr(const std::vector<Tuple>& Lr, double total_q, Data& d
     }
     return Lr.back();
 }
+
+template <typename Tuple, size_t ProbIndex>
+size_t select_tuple_index_from_Lr(const std::vector<Tuple>& Lr, double total_q, Data& data) {
+    double rand_prob = rand(0.0, 1.0, data.rng) * total_q;
+    double cumulative_prob = 0.0;
+    for (size_t i = 0; i < Lr.size(); ++i) {
+        cumulative_prob += std::get<ProbIndex>(Lr[i]);
+        if (cumulative_prob >= rand_prob) {
+            return i;  
+        }
+    }
+    return Lr.size() - 1; 
+}
+
 
 struct CompareTuple {
     bool operator()(const std::tuple<int, int, int, int, double>& a,
@@ -1006,7 +1038,7 @@ void mergeRoute(Solution& s, std::tuple<int, int, int, int, double>& selected_tu
 
 
 /********** Probabilistic C&W savings algorithm **********/
-void ProbabilisticClarkWrightSavings(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data) {
+bool ProbabilisticClarkWrightSavings(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data) {
 
     direct_routes_init(s, data);
 
@@ -1095,12 +1127,14 @@ void ProbabilisticClarkWrightSavings(Solution &s, std::vector<std::vector<int>>&
         // merge route and update saving_list
         mergeRoute(s, selected_tuple, adjMatrix, data, station_insert_pos, saving_list, saving_cache);
     }
+
+    return true;
 }
 
 
 
 /********** Probabilistic Insertion Algorithm **********/
-void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
+bool ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatrix, Data &data){
 
     double unrouted_d = data.all_delivery;
     double unrouted_p = data.all_pickup;
@@ -1175,9 +1209,6 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
         r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
         r.temp_node_list.insert(r.temp_node_list.begin() + 1, first_node);  // 尝试在备份插入第一个customer, 从第二个位置开始插入
 
-//         r.node_list = {0, 5, 3, 2, 4, 1, 0};
-// //      r.node_list = {0, 5, 6, 3, 2, 9, 4, 6, 1, 0};
-//         r.temp_node_list = r.node_list;
 
         flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
         update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
@@ -1186,13 +1217,15 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
         if (flag == 0 || flag == 2 || flag == 3) {  // "flag ==3 -> no solution" holds in the Euclidean plane
             printf("%d, ", flag);
             printf("No solution.\n");
-            exit(0);
+            return false;
+            //exit(0);
         } // 第一个点就出现时间窗不满足，容量不满足，直接退出
         // printf("index_negtive_first: %d\n", index_negtive_first);
         if (flag == 4 && !sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s)) {
             printf("%d, ", flag);
             printf("No solution.\n");
-            exit(0);            
+            return false;
+            // exit(0);            
         }
         // 电量不足，尝试插入充电站
         // 经过上面的操作，r.temp_node_list 已经插入了第一个customer，且满足容量、时间窗、电量约束
@@ -1210,6 +1243,10 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
         } // 将缓存的充电站插入信息 应用到 route 中
 
 
+        // to be optimized
+
+
+
         s.append(r);  // 将当前 route 加入到 solution 中
         
         int len = s.len();
@@ -1224,17 +1261,35 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
                 int node = std::get<0>(unrouted[i]);
                 for (int j = len-1; j < len; j++){
                     Route &r = s.get(j);
-                    int r_len = int(r.node_list.size());
+                    int r_len = int(r.node_list.size());                     
+                    r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
                     for (int pos = 1; pos < r_len; pos++){
-                        r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
-                        r.temp_node_list.insert(r.temp_node_list.begin() + pos, node);  // 尝试在备份插入第一个customer, 从第二个位置开始插入
-                        flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
-                        update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
-                        station_insert_pos.clear(); 
+                        // r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
+                        // r.temp_node_list.insert(r.temp_node_list.begin() + pos, node);  // 尝试在备份插入第一个customer, 从第二个位置开始插入
+                        // flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
+                        // update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
+                        // station_insert_pos.clear(); 
+                        // if (flag == 1 || (flag == 4 && sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s))) {
+                        //     cost_list.push_back(std::make_tuple(i, j, pos, criterion_customer(r, data, node, pos, adjMatrix)));
+                        // }
 
-                        if (flag == 1 || (flag == 4 && sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s))) {
+                        flag = 0, new_cost = 0.0;
+                        chk_nl_node_pos_O_n(r.temp_node_list, node, pos, data, flag, new_cost);
+                        if (flag == 1 || flag == 4){
                             cost_list.push_back(std::make_tuple(i, j, pos, criterion_customer(r, data, node, pos, adjMatrix)));
                         }
+                        // else if (flag == 4) {
+
+                        //     r.temp_node_list.insert(r.temp_node_list.begin() + pos, node);  // 尝试在备份插入第一个customer, 从第二个位置开始插入
+                        //     flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
+                        //     update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
+                        //     station_insert_pos.clear(); 
+                        //     if (sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s)){
+                        //         cost_list.push_back(std::make_tuple(i, j, pos, criterion_customer(r, data, node, pos, adjMatrix)));
+                        //     }
+
+                        // }
+
                     }
                 }
             }
@@ -1244,9 +1299,11 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
                 break;
             }
 
-            std::sort(cost_list.begin(), cost_list.end(), [](const std::tuple<int, int, int, double>& a, const std::tuple<int, int, int, double>& b){
-                return std::get<3>(a) > std::get<3>(b);
-            });
+            if (cost_list.size() > data.l_size){
+                std::sort(cost_list.begin(), cost_list.end(), [](const std::tuple<int, int, int, double>& a, const std::tuple<int, int, int, double>& b){
+                    return std::get<3>(a) > std::get<3>(b);
+                });              
+            }
 
             std::vector<std::tuple<int, int, int, double>> cost_list_r(cost_list.begin(), cost_list.begin() + std::min(data.l_size, (int)cost_list.size()));
             
@@ -1255,47 +1312,208 @@ void ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
                 total_q += std::get<3>(element);
             }
 
-            auto selected_tuple = select_tuple_from_Lr<std::tuple<int, int, int, double>, 3>(cost_list_r, total_q, data);
+            // to be optimized:
+            // use cost_list_r up 
+            while (cost_list_r.size() > 0){
 
-            int i = std::get<0>(selected_tuple);
-            int node = std::get<0>(unrouted[i]);
-            int j = std::get<1>(selected_tuple);
-            Route &r = s.get(j);
-            int pos = std::get<2>(selected_tuple);
+                size_t tuple_index = select_tuple_index_from_Lr<std::tuple<int, int, int, double>, 3>(cost_list_r, total_q, data);
+                auto selected_tuple = cost_list_r[tuple_index];
+                // auto selected_tuple = select_tuple_from_Lr<std::tuple<int, int, int, double>, 3>(cost_list_r, total_q, data);
 
-            r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
-            r.temp_node_list.insert(r.temp_node_list.begin() + pos, node);  // 尝试在备份插入第一个customer, 从第二个位置开始插入
-            flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
-            update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
+                int i = std::get<0>(selected_tuple);
+                int node = std::get<0>(unrouted[i]);
+                int j = std::get<1>(selected_tuple);
+                Route &r = s.get(j);
+                int pos = std::get<2>(selected_tuple);
 
-            station_insert_pos.clear(); 
-            if (flag == 0 || flag == 2 || flag == 3) {  
-                next_selected = i;
+                r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
+                r.temp_node_list.insert(r.temp_node_list.begin() + pos, node);  // 尝试在备份插入第一个customer, 从第二个位置开始插入
+                flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
+                update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
+
+                station_insert_pos.clear(); 
+
+                if (flag == 1 || (flag == 4 && sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s))) {
+                    // 经过上面的操作，r.temp_node_list 可以插入node，且满足容量、时间窗、电量约束
+                    maintain_unrouted(i, node, index, unrouted, unrouted_d, unrouted_p, data);  // 从 unrouted 中移除即将插入的 customer
+                    unrouted_flag[node] = false;
+                    r.node_list.insert(r.node_list.begin() + pos, node);    // 将 node 真的插入到 route 中
+
+                    for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
+                        r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
+                        s.idle[station_insert_pos[i].first] = false;
+                    } // 将缓存的充电站插入信息 应用到 route 中
+                    break;
+                }
+                else{
+                    // to be optimized
+                    size_t index_to_remove = tuple_index; // 需要删除的元素索引
+
+                    total_q -= std::get<3>(selected_tuple);
+
+                    if (index_to_remove < cost_list_r.size()) {
+                        // 交换待删除元素与最后一个元素
+                        std::swap(cost_list_r[index_to_remove], cost_list_r.back());
+                        // 删除最后一个元素
+                        cost_list_r.pop_back();
+                    }
+                    // next_selected = i;
+                    // break;
+
+                }
+
+            }
+
+            if (cost_list_r.size() == 0) {
+                next_selected = -1;
                 break;
-            } 
+            }
 
-            if (flag == 4 && !sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s)) {
-                next_selected = i;
-                break;
-            }  
+            // if (next_selected != -1) break;
 
-            // 经过上面的操作，r.temp_node_list 可以插入node，且满足容量、时间窗、电量约束
 
-            maintain_unrouted(i, node, index, unrouted, unrouted_d, unrouted_p, data);  // 从 unrouted 中移除即将插入的 customer
-            unrouted_flag[node] = false;
-            r.node_list.insert(r.node_list.begin() + pos, node);    // 将 node 真的插入到 route 中
+            // if (flag == 0 || flag == 2 || flag == 3) {  
+            //     next_selected = i;
+            //     break;
+            // } 
 
-            for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
-                r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
-                s.idle[station_insert_pos[i].first] = false;
-            } // 将缓存的充电站插入信息 应用到 route 中
+            // if (flag == 4 && !sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s)) {
+            //     next_selected = i;
+            //     break;
+            // }  
+
+            // // 经过上面的操作，r.temp_node_list 可以插入node，且满足容量、时间窗、电量约束
+
+            // maintain_unrouted(i, node, index, unrouted, unrouted_d, unrouted_p, data);  // 从 unrouted 中移除即将插入的 customer
+            // unrouted_flag[node] = false;
+            // r.node_list.insert(r.node_list.begin() + pos, node);    // 将 node 真的插入到 route 中
+
+            // for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
+            //     r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
+            //     s.idle[station_insert_pos[i].first] = false;
+            // } // 将缓存的充电站插入信息 应用到 route 中
         
         }
+
+        if (true){
+
+            Route& r = s.get(len - 1);
+            int j, k, check = 0;
+            double previous_cost = 0.0;
+            double heuristic_cost = 0.0;
+            index_negtive_first = -1;
+            update_route_status(r.node_list, r.status_list, data, flag, previous_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
+            std::vector<int> n_l = r.node_list;
+            int node1, node2, node3;
+            for (j = 0; j < r.node_list.size()-2; j++){
+                node1 = r.node_list[j];
+                node2 = r.node_list[j+1];
+                node3 = r.node_list[j+2];
+                if (data.node[node2].type == 2){  
+                    if (data.node[node1].type ==2 || data.node[node3].type ==2 ){  
+                        for (k=0; k<data.station_range;k++){
+                            if (((data.optimal_staion[node1][node3][k] - data.customer_num) % data.station_cardinality) == ((node2 - data.customer_num) % data.station_cardinality)) break;
+                            if (s.idle[data.optimal_staion[node1][node3][k]] == false) continue;
+                            n_l[j+1] = data.optimal_staion[node1][node3][k];
+                            flag = 0;
+                            new_cost = 0.0;
+                            index_negtive_first = -1;
+                            update_route_status(n_l,r.status_list,data,flag,new_cost,index_negtive_first);
+                            // if (flag != 1) continue;
+                            if (flag == 0|| flag==2 || flag == 3) break;
+                            if (flag == 4) { 
+                                double heuristic_cost=double(INFINITY);
+                                std::vector<std::pair<int,int>> station_insert_pos;
+                                station_insert_pos.clear();       
+                                r.temp_node_list = n_l;  
+
+                                s.idle[node2] = true;
+                                s.idle[data.optimal_staion[node1][node3][k]] = false;
+
+                                if (sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, heuristic_cost, s)){
+                                        for (int index=0; index<station_insert_pos.size(); index++){
+                                            n_l.insert(n_l.begin()+ station_insert_pos[index].second, station_insert_pos[index].first); 
+                                            s.idle[station_insert_pos[index].first] = false;
+                                        }  
+                                        new_cost = heuristic_cost;
+                                                    
+                                }
+                                else {
+                                    s.idle[node2] = false;
+                                    s.idle[data.optimal_staion[node1][node3][k]] = true;
+                                    break;
+                                } 
+                            }      
+                            if (new_cost-previous_cost<-PRECISION)  {
+                                //printf("%d, %d -> %d, %d: %.2lf\n",first_node,node2,data.optimal_staion[first_node][node3][k],node3, new_cost-pre_cost);
+                                heuristic_cost = new_cost;
+                                s.idle[node2] = true;
+                                s.idle[data.optimal_staion[node1][node3][k]] = false;
+                                r.node_list = n_l;
+                                check = 1;
+                                break;
+                            }    
+                            else{
+                                n_l = r.node_list;
+                            }  
+
+                        }
+                        if (check == 1){
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+        
+        // /*** redundancy removal ***/
+        // std::vector<int> redundant_station;
+        // Route &r_tmp = s.get(len - 1);
+        // std::vector<int> nl = r_tmp.node_list;
+        // for (int k = 1; k < nl.size() - 1; k++) {
+        //     if (data.node[nl[k]].type == 2) {
+        //         redundant_station.push_back(nl[k]);
+        //         s.idle[nl[k]] = true;
+        //     }
+        // }
+
+        // nl.erase(std::remove_if(nl.begin(), nl.end(), 
+        // [&data](int node) { return data.node[node].type == 2; }), nl.end());
+
+        // r.node_list = nl;
+        // r.temp_node_list = r.node_list;  // 当前 route 的 node list 备份
+        // flag = 0, new_cost = 0.0, index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
+        // update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
+
+        // station_insert_pos.clear(); 
+
+        // if (flag == 1 || (flag == 4 && sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s))){
+
+        //         for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
+        //             r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
+        //             s.idle[station_insert_pos[i].first] = false;
+        //         } // 将缓存的充电站插入信息 应用到 route 中
+
+        //         s.get(len - 1) = r;
+
+
+        // }
+        // else{
+        //     for (auto node : redundant_station) {
+        //         s.idle[node] = false;
+        //     }          
+        // }
 
     }
 
     s.update(data);
     s.cal_cost(data);
     // s.output(data);
+
+    return true;
 }
 //*********************************************************************************************

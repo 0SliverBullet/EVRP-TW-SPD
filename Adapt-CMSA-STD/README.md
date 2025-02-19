@@ -179,6 +179,20 @@ valgrind --version
 ```
 
 
+the server executes multiple command lines in multi threading：
+
+```shell
+
+g++ -std=c++17 -pthread -o ./bin/run_commands -O3 ./bin/run_commands.cpp
+
+./bin/run_commands
+
+g++ -std=c++17 -pthread -o ./bin/run_medium -O3 ./bin/run_medium.cpp
+
+./bin/run_medium
+
+```shell
+
 
 **TODO List:**
 
