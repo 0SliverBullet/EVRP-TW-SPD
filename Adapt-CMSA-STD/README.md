@@ -187,6 +187,10 @@ g++ -std=c++17 -pthread -o ./bin/run_commands -O3 ./bin/run_commands.cpp
 
 ./bin/run_commands
 
+g++ -std=c++17 -pthread -o ./bin/run_small -O3 ./bin/run_small.cpp
+
+./bin/run_small
+
 g++ -std=c++17 -pthread -o ./bin/run_medium -O3 ./bin/run_medium.cpp
 
 ./bin/run_medium

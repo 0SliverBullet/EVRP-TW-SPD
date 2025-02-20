@@ -113,7 +113,11 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
                 Solution s(data);
                 ProbabilisticSolutionConstruction(s, adjMatrix_tmp, data);
 
-                LocalSearch(s, data,1);
+                // prevent from running out of time
+                used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+                if (data.tmax == NO_LIMIT || used_sec < clock_t(data.tmax)) {
+                    LocalSearch(s, data, 1);
+                }
 
                 adjMatrix_s.assign(data.node_num, std::vector<int>(data.node_num, 0));
                 s.adjMatrixRepresentation(adjMatrix_s);
@@ -124,18 +128,37 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
                     cost_in_this_run = s_bsf.cost;
                 }
 
+                // prevent from running out of time
+                used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+                if (data.tmax != NO_LIMIT && used_sec > clock_t(data.tmax))
+                {
+                    time_exhausted = true;
+                    break;
+                }
+
             }
             
             Solution s_cplex(data);
             double t_solve = 0.0;
-
-            SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
-
-            if (s_cplex.cost == double(INFINITY)) {
+            
+            // prevent from running out of time
+            used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+            if (data.tmax != NO_LIMIT && clock_t(data.tmax) - used_sec < t_ILP){
                 s_cplex = s_bsf;
             }
+            else {
+                SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
+                // handle exception: empty s_cplex when CPLEX fails to find a solution
+                if (s_cplex.cost == double(INFINITY)) {
+                    s_cplex = s_bsf;
+                }
+            }
             
-            LocalSearch(s_cplex, data, 2);
+            // prevent from running out of time
+            used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+            if (data.tmax == NO_LIMIT || used_sec < clock_t(data.tmax)){
+                LocalSearch(s_cplex, data, 2);
+            }
 
             /* Adapt: alpha_bsf, n_a, l_size */
             if (t_solve < t_prop * t_ILP && data.alpha_bsf > alpha_LB) {
