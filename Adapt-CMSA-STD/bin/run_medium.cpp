@@ -62,13 +62,13 @@ void add_to_threads(std::vector<std::thread>& threads, const std::string& baseCo
 
     std::vector<std::string> medium_instances;
 
-    for (int i = 101; i <= 109; ++i) {
-        medium_instances.push_back("c" + std::to_string(i) + "_21");
-    }
+    // for (int i = 101; i <= 109; ++i) {
+    //     medium_instances.push_back("c" + std::to_string(i) + "_21");
+    // }
 
-    for (int i = 201; i <= 208; ++i) {
-        medium_instances.push_back("c" + std::to_string(i) + "_21");
-    }
+    // for (int i = 201; i <= 208; ++i) {
+    //     medium_instances.push_back("c" + std::to_string(i) + "_21");
+    // }
 
     // for (int i = 101; i <= 112; ++i) {
     //     medium_instances.push_back("r" + std::to_string(i) + "_21");
@@ -78,13 +78,13 @@ void add_to_threads(std::vector<std::thread>& threads, const std::string& baseCo
     //     medium_instances.push_back("r" + std::to_string(i) + "_21");
     // }
 
-    // for (int i = 101; i <= 108; ++i) {
-    //     medium_instances.push_back("rc" + std::to_string(i) + "_21");
-    // }
+    for (int i = 101; i <= 108; ++i) {
+        medium_instances.push_back("rc" + std::to_string(i) + "_21");
+    }
 
-    // for (int i = 201; i <= 208; ++i) {
-    //     medium_instances.push_back("rc" + std::to_string(i) + "_21");
-    // }
+    for (int i = 201; i <= 208; ++i) {
+        medium_instances.push_back("rc" + std::to_string(i) + "_21");
+    }
 
     // for (const auto& [options, prefix] : options_and_prefixes) {
     //     for (int i = 0; i < small_instances.size(); ++i){

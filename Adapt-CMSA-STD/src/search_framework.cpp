@@ -1,6 +1,7 @@
 #include"search_framework.h"
 #include <cstdio>
 #include <cstdlib>
+#include <utility>
 extern clock_t find_best_time;
 extern clock_t find_bks_time;
 extern int find_best_run;
@@ -117,12 +118,22 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
                 adjMatrix_s.assign(data.node_num, std::vector<int>(data.node_num, 0));
                 s.adjMatrixRepresentation(adjMatrix_s);
                 Merge(adjMatrix, adjMatrix_s, data.node_num);
+                
+                if (s.cost < s_bsf.cost) {
+                    s_bsf = s;
+                    cost_in_this_run = s_bsf.cost;
+                }
+
             }
             
             Solution s_cplex(data);
             double t_solve = 0.0;
 
             SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
+
+            if (s_cplex.cost == double(INFINITY)) {
+                s_cplex = s_bsf;
+            }
             
             LocalSearch(s_cplex, data, 2);
 
