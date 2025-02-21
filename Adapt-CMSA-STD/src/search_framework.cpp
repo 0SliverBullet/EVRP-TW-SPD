@@ -116,7 +116,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
                 // prevent from running out of time
                 used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
                 if (data.tmax == NO_LIMIT || used_sec < clock_t(data.tmax)) {
-                    LocalSearch(s, data, 1);
+                    LocalSearch(s, data, stime, 1);
                 }
 
                 adjMatrix_s.assign(data.node_num, std::vector<int>(data.node_num, 0));
@@ -157,7 +157,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
             // prevent from running out of time
             used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
             if (data.tmax == NO_LIMIT || used_sec < clock_t(data.tmax)){
-                LocalSearch(s_cplex, data, 2);
+                LocalSearch(s_cplex, data, stime, 2);
             }
 
             /* Adapt: alpha_bsf, n_a, l_size */
@@ -336,7 +336,7 @@ void Increment(Data& data){
     data.l_size += data.delta_l_size;
 }
 
-void LocalSearch(Solution &s, Data& data, int id){
+void LocalSearch(Solution &s, Data& data, clock_t stime, int id){
     printf("Before LocalSearch%d: %.2lf\n", id, s.cost);
     double base_cost = s.cost;
 
@@ -351,7 +351,7 @@ void LocalSearch(Solution &s, Data& data, int id){
         //no need to update total_cost                      
     }   
 
-    find_local_optima(s, data, base_cost, id-1);
+    find_local_optima(s, data, stime, base_cost, id-1);
 
     for (int j = 0; j< s.len(); j++ ){
         Route &r = s.get(j);

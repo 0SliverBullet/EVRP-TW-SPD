@@ -594,7 +594,7 @@ public:
 
         this->update(data);
         this->cal_cost(data);
-        printf("%.2f\n", this->cost);
+        // printf("%.2f\n", this->cost);
     }
 
 

@@ -23,7 +23,8 @@ int active_threads = 0;
 //                           51,52,53,54,55};
 std::vector<int> cores = {30,
                           31,32,33,34,35,36,37,38,39,40,
-                          41,42,43,44,45,46,47,48,49 };
+                          41,42,43,44,45,46,47,48,49, 50,
+                          51, 52, 53};
 int num_cores = cores.size(); // Number of specific cores we want to use
 
 void execute_command(const std::string& command, int core_id) {

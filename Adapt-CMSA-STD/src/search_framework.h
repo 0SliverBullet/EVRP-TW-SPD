@@ -25,7 +25,7 @@ void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<in
 void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data);
 void Initialize(Data& data);
 void Increment(Data& data);
-void LocalSearch(Solution &s, Data& data,int id);
+void LocalSearch(Solution &s, Data& data, clock_t stime, int id);
 void write_solution_to_file(Data &data, Solution &s_bsf, int run, const std::vector<double> &solutions, const std::vector<double> &times, double cost_all_run, double time_all_run);
 
 static inline bool termination(int no_improve, Data &data)

@@ -23,7 +23,8 @@ int active_threads = 0;
 //                           51,52,53,54,55};
 std::vector<int> cores = {30,
                           31,32,33,34,35,36,37,38,39,40,
-                          41,42,43,44,45,46,47,48,49 };
+                          41,42,43,44,45,46,47,48,49, 50,
+                          51, 52, 53};
 int num_cores = cores.size(); // Number of specific cores we want to use
 
 void execute_command(const std::string& command, int core_id) {
@@ -110,7 +111,7 @@ int main() {
     std::string baseCommand = "./build/evrp-tw-spd --problem ./data/akb_instances/";
 
     std::vector<std::tuple<std::string, std::string>> options_and_prefixes = {
-        {" --pruning --output ./solution/v1/akb/ --time 630 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 5", "_"}
+        {" --pruning --output ./solution/v0.0.3/akb/ --time 630 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 5", "_"}
     };
 
     std::vector<std::thread> threads;

@@ -45,7 +45,7 @@ void snippet(int r1, int r2, std::string &opt, Solution &s, Data &data, Move &ta
         target = m;
 }
 
-void find_local_optima(Solution &s, Data &data, double base_cost, int id)
+void find_local_optima(Solution &s, Data &data, clock_t stime, double base_cost, int id)
 {
     // delta_value: EVRP-TW-SPD
     
@@ -95,6 +95,8 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
     // double acc_delta_cost = 0;
     std::vector<int> tour_id_array;
     //std::vector<int> no_use;
+    double used_sec = 0.0;
+
     while (true)
     {
         int best_index = -1;
@@ -112,8 +114,11 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
                 min_delta_cost = move_list[i].delta_cost;
             }
         }
+
+        // prevent from running out of time
+        used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
         
-        if (min_delta_cost < -PRECISION)
+        if ((data.tmax == NO_LIMIT || used_sec < clock_t(data.tmax)) && min_delta_cost < -PRECISION)
         {
             // apply move
             std::unordered_set<int> set = {0, 1};
@@ -137,7 +142,7 @@ void find_local_optima(Solution &s, Data &data, double base_cost, int id)
             }
             s.cost += min_delta_cost;
             
-            printf("%.2lf\n", s.cost);        
+            // printf("%.2lf\n", s.cost);        
             base_cost = s.cost;
 
             // update move_list
