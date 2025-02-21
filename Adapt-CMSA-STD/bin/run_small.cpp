@@ -111,7 +111,7 @@ int main() {
     std::string baseCommand = "./build/evrp-tw-spd --problem ./data/akb_instances/";
 
     std::vector<std::tuple<std::string, std::string>> options_and_prefixes = {
-        {" --pruning --output ./solution/v0.0.3/akb/ --time 105 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 3", "_"}
+        {" --pruning --output ./solution/v0.0.1/akb/ --time 105 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 3", "_"}
     };
 
     std::vector<std::thread> threads;

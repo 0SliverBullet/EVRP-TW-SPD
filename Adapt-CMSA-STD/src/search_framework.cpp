@@ -88,6 +88,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
         // exit(0);
 
         double cost_in_this_run = s_bsf.cost;
+        double time_bks = used_sec; 
         /* ------------------------------ */
 
         // no_improve = data.g_1 + 1;
@@ -126,6 +127,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
                 if (s.cost < s_bsf.cost) {
                     s_bsf = s;
                     cost_in_this_run = s_bsf.cost;
+                    time_bks = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
                 }
 
                 // prevent from running out of time
@@ -189,6 +191,7 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
             {
                     no_improve = 0;
                     cost_in_this_run = s_bsf.cost;
+                    time_bks = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
             }
             used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
             used = (clock() - stime) / CLOCKS_PER_SEC;
@@ -213,7 +216,8 @@ void Adapt_CMSA_STD(Data &data, Solution &best_s){
 
         printf("Run %d finishes\n", run);
         cost_all_run += s_bsf.cost;
-        time_all_run += used_sec;
+        // time_all_run += used_sec;
+        time_all_run += time_bks;
 
         solutions.push_back(s_bsf.cost);
         times.push_back(used_sec);

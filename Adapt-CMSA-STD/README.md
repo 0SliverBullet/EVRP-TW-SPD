@@ -183,10 +183,6 @@ the server executes multiple command lines in multi threading：
 
 ```shell
 
-g++ -std=c++17 -pthread -o ./bin/run_commands -O3 ./bin/run_commands.cpp
-
-./bin/run_commands
-
 g++ -std=c++17 -pthread -o ./bin/run_small -O3 ./bin/run_small.cpp
 
 ./bin/run_small
@@ -200,10 +196,16 @@ g++ -std=c++17 -pthread -o ./bin/run_medium -O3 ./bin/run_medium.cpp
 
 **TODO List:**
 
-- [ ] random number generator should be optimized
+- [X] random number generator should be optimized
 - [ ] code programing optimization
 - [X] make sure that each dummy station is used at most once
 - [X] pay attention to memory manage
 - [ ] check that each dummy station is used at most once
 - [X] should s_cplex.idle be updated? Necessary! See in Function "SolveSubinstance"
 
+
+**Algorithm Reimplementation Version Descrption**
+
+v0.0.1: the ‘time’ columns show the average computation times of both Adapt-CMSA variants to generate the best solutions in each run (time to obtain solution).
+
+v0.0.4: final version (time to finish algorithm). 
