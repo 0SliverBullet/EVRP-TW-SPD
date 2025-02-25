@@ -142,7 +142,7 @@ void find_local_optima(Solution &s, Data &data, clock_t stime, double base_cost,
             }
             s.cost += min_delta_cost;
             
-            // printf("%.2lf\n", s.cost);        
+            printf("%.2lf\n", s.cost);        
             base_cost = s.cost;
 
             // update move_list
@@ -225,7 +225,7 @@ void relocation(int r1, int r2, Solution &s, Data &data, Move &m, double &base_c
     for (int start = 1; start <= len - 2; start++)
     {
         // data.or_opt = 1 by default
-        for (int seq_len = 1; seq_len <= data.or_opt_len; seq_len++)
+        for (int seq_len = 1; seq_len <= data.relocation_len; seq_len++)
         {
             int end = start + seq_len - 1;
             if (end >= len - 1) continue;
@@ -271,20 +271,20 @@ void relocation(int r1, int r2, Solution &s, Data &data, Move &m, double &base_c
                     m = tmp_move;
                 }
             }
-            // relocate to a new route
-            tmp_move.r_indice[0] = r1;
-            tmp_move.r_indice[1] = -1;
-            tmp_move.len_1 = 2;
-            tmp_move.seqList_1[0] = {r1, 0, start - 1};
-            tmp_move.seqList_1[1] = {r1, end + 1, len - 1};
-            tmp_move.len_2 = 3;
-            tmp_move.seqList_2[0] = {-1, data.DC, data.DC};
-            tmp_move.seqList_2[1] = {r1, start, end};
-            tmp_move.seqList_2[2] = {-1, data.DC, data.DC};
-            if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
-            {
-                m = tmp_move;
-            }
+            // // relocate to a new route
+            // tmp_move.r_indice[0] = r1;
+            // tmp_move.r_indice[1] = -1;
+            // tmp_move.len_1 = 2;
+            // tmp_move.seqList_1[0] = {r1, 0, start - 1};
+            // tmp_move.seqList_1[1] = {r1, end + 1, len - 1};
+            // tmp_move.len_2 = 3;
+            // tmp_move.seqList_2[0] = {-1, data.DC, data.DC};
+            // tmp_move.seqList_2[1] = {r1, start, end};
+            // tmp_move.seqList_2[2] = {-1, data.DC, data.DC};
+            // if (eval_move(s, tmp_move, data, base_cost) && tmp_move.delta_cost < m.delta_cost)
+            // {
+            //     m = tmp_move;
+            // }
         }
     }
 }

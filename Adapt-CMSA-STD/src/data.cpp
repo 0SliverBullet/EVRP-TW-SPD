@@ -56,8 +56,8 @@ Data::Data(ArgumentParser &parser)
         else if (results[0] == "VEHICLES")
         {
             printf("%s\n", line.c_str());
-            // this->vehicle.max_num = stoi(results[1]) + V_NUM_RELAX;
-            this->vehicle.max_num = stoi(results[1]) * 2; 
+            this->vehicle.max_num = stoi(results[1]) + V_NUM_RELAX;  // jd set
+            // this->vehicle.max_num = stoi(results[1]) * 2; // akb set
         }
         else if (results[0] == "DISPATCHINGCOST")
         {

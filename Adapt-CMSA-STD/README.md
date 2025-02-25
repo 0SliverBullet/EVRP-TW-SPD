@@ -183,13 +183,30 @@ the server executes multiple command lines in multi threading：
 
 ```shell
 
+# (small-scale instances)
+
 g++ -std=c++17 -pthread -o ./bin/run_small -O3 ./bin/run_small.cpp
 
 ./bin/run_small
 
+# (medium-scale instances)
+
 g++ -std=c++17 -pthread -o ./bin/run_medium -O3 ./bin/run_medium.cpp
 
 ./bin/run_medium
+
+# (large-scale instances)
+
+g++ -std=c++17 -pthread -o ./bin/run_large -O3 ./bin/run_large.cpp
+
+./bin/run_large_st
+
+./bin/run_large_lt
+
+
+salloc -p rtx2080ti -c 24 -q rtx2080ti
+
+taskset -pc $$
 
 ```
 

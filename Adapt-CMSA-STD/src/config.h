@@ -3,11 +3,10 @@
 #include <climits> 
 #include <string>
 
-// The following definitions might need to be changed
-// for different problems
-const int MAX_POINT = 1250; 
+// The following definitions might need to be changed for different problems
+const int MAX_POINT = 2250;  // 1000 customers + 1000 dummy stations + 250 relaxations
 const int MAX_NODE_IN_ROUTE = 100;
-const int MAX_STATION_POINT = 505;
+const int MAX_STATION_POINT = 1010; // 1000 dummy stations + 10 relaxations
 const int DEFAULT_SEED = 42 + 14;
 const int V_NUM_RELAX = 3;
 
