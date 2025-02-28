@@ -354,13 +354,14 @@ private:
     std::vector<Route> route_list;
 
 public:
-    std::vector<bool> idle;
+    // std::vector<bool> idle;
     double cost = 0.0;
 
     Solution(){}
 
     Solution(const Data &data)
-        : route_list(), idle(data.node_num, true), cost(0.0)
+        // : route_list(), idle(data.node_num, true), cost(0.0)
+        : route_list(), cost(0.0)
     {
         route_list.reserve(data.vehicle.max_num);
     }

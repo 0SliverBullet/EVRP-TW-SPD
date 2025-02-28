@@ -88,7 +88,7 @@ void Adapt_CMSA_SETCOV(Data &data, Solution &best_s){
         // exit(0);
 
         double cost_in_this_run = s_bsf.cost;
-        // double time_bks = used_sec; // time to find/generate the best solution
+        double time_bks = used_sec; // time to find/generate the best solution
         /* ------------------------------ */
 
         // no_improve = data.g_1 + 1;
@@ -110,6 +110,10 @@ void Adapt_CMSA_SETCOV(Data &data, Solution &best_s){
             std::vector<std::vector<int>> adjMatrix_s;
             adjMatrix_s.resize(data.node_num, std::vector<int>(data.node_num, 0)); 
 
+            Solution tour_set(data);
+            InitializeTour(data);
+            Merge(tour_set, s_bsf, data);
+
             for (int i = 0; i < data.n_a; ++i) {
                 Solution s(data);
                 ProbabilisticSolutionConstruction(s, adjMatrix_tmp, data);
@@ -123,11 +127,12 @@ void Adapt_CMSA_SETCOV(Data &data, Solution &best_s){
                 adjMatrix_s.assign(data.node_num, std::vector<int>(data.node_num, 0));
                 s.adjMatrixRepresentation(adjMatrix_s);
                 Merge(adjMatrix, adjMatrix_s, data.node_num);
-                
+                Merge(tour_set, s, data);                
+
                 if (s.cost < s_bsf.cost) {
                     s_bsf = s;
                     cost_in_this_run = s_bsf.cost;
-                    // time_bks = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+                    time_bks = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
                 }
 
                 // prevent from running out of time
@@ -149,10 +154,20 @@ void Adapt_CMSA_SETCOV(Data &data, Solution &best_s){
                 s_cplex = s_bsf;
             }
             else {
-                SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data); 
+                // SolveSubinstance(s_cplex, t_solve, adjMatrix, t_ILP, data);
+                 SolveSubinstance(s_cplex, t_solve, tour_set, t_ILP, data);
+                // s_cplex is a solution obtained by solving the ILP_SETCOV model, may includes duplicate customers 
                 // handle exception: empty s_cplex when CPLEX fails to find a solution
                 if (s_cplex.cost == double(INFINITY)) {
                     s_cplex = s_bsf;
+                }
+                else{
+                    RemoveDuplicates(s_cplex, data);
+                    // if RemoveDuplicates(s_cplex, data) fails to find a solution, i.e., s_cplex violates the constraints (battery, time windows), 
+                    // then s_cplex = s_bsf
+                    if (s_cplex.cost == double(INFINITY)) {
+                        s_cplex = s_bsf;
+                    }
                 }
             }
             
@@ -191,7 +206,7 @@ void Adapt_CMSA_SETCOV(Data &data, Solution &best_s){
             {
                     no_improve = 0;
                     cost_in_this_run = s_bsf.cost;
-                    // time_bks = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
+                    time_bks = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
             }
             used_sec = (clock() - stime) / (CLOCKS_PER_SEC*1.0);
             used = (clock() - stime) / CLOCKS_PER_SEC;
@@ -216,11 +231,12 @@ void Adapt_CMSA_SETCOV(Data &data, Solution &best_s){
 
         printf("Run %d finishes\n", run);
         cost_all_run += s_bsf.cost;
-        time_all_run += used_sec;
-        // time_all_run += time_bks;
+        // time_all_run += used_sec;
+        time_all_run += time_bks;
 
         solutions.push_back(s_bsf.cost);
-        times.push_back(used_sec);
+        // times.push_back(used_sec);
+        times.push_back(time_bks);
 
         data.rng.seed(data.seed + run);
 
@@ -274,7 +290,7 @@ void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>
     int attempts = 0;
     bool isCWsavings = (rand(0.0, 1.0, data.rng) <= data.h_rate);
     if (isCWsavings) {
-        printf("ProbabilisticClarkWrightSavings\n");
+        // printf("ProbabilisticClarkWrightSavings\n");
         while (!ProbabilisticClarkWrightSavings(s_tmp, adjMatrix, data) && attempts < max_attempts) {
             s_tmp = Solution(data);
             ++attempts;
@@ -293,7 +309,7 @@ void ProbabilisticSolutionConstruction(Solution &s, std::vector<std::vector<int>
         */
     } 
     else {
-        printf("ProbabilisticInsertion\n");
+        // printf("ProbabilisticInsertion\n");
         while (!ProbabilisticInsertion(s_tmp, adjMatrix, data) && attempts < max_attempts) {
             s_tmp = Solution(data);
             ++attempts;
@@ -316,18 +332,25 @@ void Merge(std::vector<std::vector<int>>& adjMatrix1, std::vector<std::vector<in
     }    
 }
 
-void SolveSubinstance(Solution &s_cplex, double &t_solve, std::vector<std::vector<int>>&adjMatrix, double t_ILP, Data &data){
-    ILPmodel(s_cplex, t_solve, data, t_ILP, adjMatrix); // solve the ILP model to get the optimal solution
-    int len = s_cplex.len();
-    for (int i = 0; i < len; i++){
-        Route& r = s_cplex.get(i);
-        std::vector<int>& nl = r.node_list;
-        for (int node: nl){
-            if (data.node[node].type == 2){
-                s_cplex.idle[node] = false;
+void Merge(Solution &tour_set, Solution &s, Data& data){
+    std::vector<IloInt> indexArray(data.cplex_data.numCustomers);
+    for (int i = 0; i < s.len(); i++){
+        Route &r = s.get(i);
+        tour_set.append(r);
+        data.cplex_data.transcost.push_back(r.transcost);
+        for (auto node: r.node_list){
+            if (data.node[node].type == 1){
+                indexArray[node-1] = i + data.cplex_data.numRoutes;
             }
         }
     }
+    data.cplex_data.routesIndex.push_back(indexArray);
+    data.cplex_data.numSolutions++;
+    data.cplex_data.numRoutes+= s.len();
+}
+
+void SolveSubinstance(Solution &s_cplex, double &t_solve, Solution& tour_set, double t_ILP, Data &data){
+    ILPSETCOVmodel(s_cplex, t_solve, data, t_ILP, tour_set); // solve the ILPSETCOV model to get the optimal solution
 }
 
 void Initialize(Data& data){
@@ -341,7 +364,7 @@ void Increment(Data& data){
 }
 
 void LocalSearch(Solution &s, Data& data, clock_t stime, int id){
-    printf("Before LocalSearch%d: %.2lf\n", id, s.cost);
+    // printf("Before LocalSearch%d: %.2lf\n", id, s.cost);
     double base_cost = s.cost;
 
     for (int j = 0; j< s.len(); j++ ){
@@ -364,9 +387,15 @@ void LocalSearch(Solution &s, Data& data, clock_t stime, int id){
     } 
     s.cal_cost(data);
 
-    printf("After LocalSearch%d: %.2lf\n", id, s.cost);
+    //printf("After LocalSearch%d: %.2lf\n", id, s.cost);
 }
 
+void InitializeTour(Data& data){
+    data.cplex_data.numSolutions = 0;
+    data.cplex_data.numRoutes = 0;
+    data.cplex_data.transcost.clear();
+    data.cplex_data.routesIndex.clear();
+}
 
 void write_solution_to_file(Data &data, Solution &s_bsf, int run, const std::vector<double> &solutions, const std::vector<double> &times, double cost_all_run, double time_all_run) {
 

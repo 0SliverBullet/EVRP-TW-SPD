@@ -1,4 +1,5 @@
 #pragma once
+#include <ilconcert/ilosys.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -40,6 +41,11 @@ struct Vehicle
 };
 
 struct CplexData{
+
+    IloInt numSolutions = 0, numRoutes = 0;
+    std::vector<double> transcost;
+    std::vector<std::vector<IloInt>> routesIndex;
+
 
     IloInt numDepots0, numDepotsN1, numStations, numCustomers;
     IloInt numTotal;

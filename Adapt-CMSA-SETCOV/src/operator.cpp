@@ -142,23 +142,25 @@ void find_local_optima(Solution &s, Data &data, clock_t stime, double base_cost,
             }
             s.cost += min_delta_cost;
             
-            printf("%.2lf\n", s.cost);        
+            // printf("%.2lf\n", s.cost);        
             base_cost = s.cost;
 
             // update move_list
             int len = s.len();
 
-            for (int node = data.customer_num+1; node <= data.customer_num + data.station_num; node++){
-                s.idle[node] = true;
-            }
-            for (int i = 0; i < len; i++){
-                Route& r = s.get(i);
-                for (int node: r.customer_list){
-                    if (data.node[node].type == 2){
-                        s.idle[node] = false;
-                    }
-                }
-            }
+            // for (int node = data.customer_num+1; node <= data.customer_num + data.station_num; node++){
+            //     s.idle[node] = true;
+            // }
+
+            // printf("solution: \n");
+            // for (int i = 0; i < len; i++){
+            //     Route& r = s.get(i);
+            //     for (int node: r.node_list){
+            //         printf("%d ", node);
+            //     }
+            //     printf("\n");
+            // }
+            
 
 
             for (int i = 0; i < int(move_list.size()); i++)
@@ -404,6 +406,7 @@ void two_opt(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost
 void exchange_1_1(int r1, int r2, Solution &s, Data &data, Move &m, double &base_cost){
     m.delta_cost = double(INFINITY);
     // exchange two sequences with seqs
+    // printf("%d, %d\n", r1, r2);
     Route &r_1 = s.get(r1);
     auto &n_l_1 = r_1.node_list;
     int len_1 = int(n_l_1.size());
@@ -423,6 +426,17 @@ void exchange_1_1(int r1, int r2, Solution &s, Data &data, Move &m, double &base
                 {
                     int end_2 = start_2 + seq_len_2 - 1;
                     if (end_2 >= len_2 - 1) continue;
+                    // printf("index: %d, %d; ", start_1-1, start_2);
+                    // printf("len: %d, %d; ", int(n_l_1.size()), int(n_l_2.size()));
+                    // printf("customer: %d\n", n_l_1[start_1-1]);
+                    // for (int node: n_l_1){
+                    //     printf("%d ", node);
+                    // }
+                    // printf("\n");
+                    // for (int node: n_l_2){
+                    //     printf("%d ", node);
+                    // }
+                    // printf("\n");
                     if (data.pruning &&
                         (!data.pm[n_l_1[start_1-1]][n_l_2[start_2]] ||\
                             !data.pm[n_l_2[end_2]][n_l_1[end_1+1]] ||\
@@ -509,6 +523,94 @@ void shift_1_0(int r_index_1, int r_index_2, Solution &s, Data &data, Move &m, d
             }
         }
     }
+}
+
+
+void RemoveDuplicates(Solution &s, Data& data){
+
+    vector<int> unique(data.customer_num + 1, 0);
+    int len = s.len();
+    for (int i = 0; i < len; i++){
+        Route &r = s.get(i);
+        std::vector<int> &nl = r.node_list;
+        for (int node : nl){
+            if (data.node[node].type == 1){
+                unique[node]++;
+            }
+        }
+    }
+
+    int select = -1, r_index = -1, pos = -1;
+    double benefit = -double(INFINITY);
+
+    // Loop to find and remove duplicates
+    while (true) {
+        // Find the next node to remove
+        select = -1;
+        benefit = -double(INFINITY);
+        
+        for (int i = 0; i < len; i++) {
+            Route &r = s.get(i);
+            std::vector<int> &nl = r.node_list;
+            
+            for (int j = 1; j < nl.size() - 1; j++) {  // Avoid first and last node
+                int node = nl[j];
+                
+                if (data.node[node].type == 1 && unique[node] > 1) {
+                    int prev = nl[j - 1], next = nl[j + 1];
+                    double TD = data.dist[prev][node] + data.dist[node][next] - data.dist[prev][next];
+                    
+                    if (TD > benefit) {
+                        select = node;
+                        r_index = i;
+                        pos = j;
+                        benefit = TD;
+                    }
+                }
+            }
+        }
+
+        // If no more duplicates are found, break the loop
+        if (select == -1) {
+            break;
+        }
+
+        // Remove the selected node
+        Route &r = s.get(r_index);
+        std::vector<int> &nl = r.node_list;
+        nl.erase(nl.begin() + pos);  // Remove the node at the specified position
+
+        // Decrement the unique count for the selected node
+        unique[select]--;
+    }
+
+    s.update(data);
+
+    len = s.len();
+    for (int i = 0; i < len; i++) {
+        Route &r = s.get(i);
+        std::vector<int> &nl = r.node_list;
+        nl.erase(std::remove_if(nl.begin(), nl.end(), 
+                [&data](int node) { return data.node[node].type == 2; }), nl.end());
+        r.temp_node_list = nl;
+        int flag = 0,  index_negtive_first = -1;  // flag: 0->infeasible, 1->feasible, 2->capacity infeasible, 3->time window infeasible, 4->electricity infeasible
+        double new_cost = 0.0;
+        update_route_status(r.temp_node_list, r.status_list, data, flag, new_cost, index_negtive_first);  // 更新 route 的 status list, 计算到达和离开每个点的时间、电量
+        std::vector<std::pair<int,int>> station_insert_pos;
+        station_insert_pos.clear(); 
+        if (flag == 1 || (flag == 4 && sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, new_cost, s))) {
+            for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
+                r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
+            }
+        }
+        else{
+            s.cost = double(INFINITY);
+            return;
+        }
+    }
+
+    s.update(data);
+    s.cal_cost(data); 
 }
 
 
@@ -599,7 +701,7 @@ void direct_routes_init(Solution &s, Data &data)
 
         for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
             r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
-            s.idle[station_insert_pos[i].first] = false;
+            // s.idle[station_insert_pos[i].first] = false;
         }
 
         s.append(r);
@@ -724,13 +826,13 @@ void mergeRoute(Solution& s, std::tuple<int, int, int, int, double>& selected_tu
     nl.push_back(0);
     
     // 充电站冗余识别
-    std::vector<int> redundant_station;
-    for (int k = 1; k < nl.size() - 1; k++) {
-        if (data.node[nl[k]].type == 2) {
-            redundant_station.push_back(nl[k]);
-            s.idle[nl[k]] = true;
-        }
-    }
+    // std::vector<int> redundant_station;
+    // for (int k = 1; k < nl.size() - 1; k++) {
+    //     if (data.node[nl[k]].type == 2) {
+    //         redundant_station.push_back(nl[k]);
+            // s.idle[nl[k]] = true;
+    //     }
+    // }
 
     nl.erase(std::remove_if(nl.begin(), nl.end(), 
             [&data](int node) { return data.node[node].type == 2; }), nl.end());
@@ -753,7 +855,7 @@ void mergeRoute(Solution& s, std::tuple<int, int, int, int, double>& selected_tu
 
         for (int k = 0; k < station_insert_pos.size(); k++){  // the same insertion order
             r.node_list.insert(r.node_list.begin() + station_insert_pos[k].second, station_insert_pos[k].first); 
-            s.idle[station_insert_pos[k].first] = false;
+            // s.idle[station_insert_pos[k].first] = false;
         } // 将缓存的充电站插入信息 应用到 route 中
 
         s.get(i) = r;  // 更新 route i
@@ -1026,9 +1128,9 @@ void mergeRoute(Solution& s, std::tuple<int, int, int, int, double>& selected_tu
         
         // printf("Route %d and Route %d are not merged. ", i, j);
 
-        for (auto node : redundant_station) {
-            s.idle[node] = false;
-        }
+        // for (auto node : redundant_station) {
+            // s.idle[node] = false;
+        // }
         // printf("(%d, %d, %d, %d, %.2lf) ", i, dir1, j, dir2, std::get<4>(selected_tuple));
         saving_list.erase(selected_tuple);
         // printf("%zu ", saving_list.size());
@@ -1244,7 +1346,7 @@ bool ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
 
         for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
             r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
-            s.idle[station_insert_pos[i].first] = false;
+            // s.idle[station_insert_pos[i].first] = false;
         } // 将缓存的充电站插入信息 应用到 route 中
 
 
@@ -1346,7 +1448,7 @@ bool ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
 
                     for (int i = 0; i < station_insert_pos.size(); i++){  // the same insertion order
                         r.node_list.insert(r.node_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
-                        s.idle[station_insert_pos[i].first] = false;
+                        // s.idle[station_insert_pos[i].first] = false;
                     } // 将缓存的充电站插入信息 应用到 route 中
                     break;
                 }
@@ -1418,7 +1520,7 @@ bool ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
                     if (data.node[node1].type ==2 || data.node[node3].type ==2 ){  
                         for (k=0; k<data.station_range;k++){
                             if (((data.optimal_staion[node1][node3][k] - data.customer_num) % data.station_cardinality) == ((node2 - data.customer_num) % data.station_cardinality)) break;
-                            if (s.idle[data.optimal_staion[node1][node3][k]] == false) continue;
+                            // if (s.idle[data.optimal_staion[node1][node3][k]] == false) continue;
                             n_l[j+1] = data.optimal_staion[node1][node3][k];
                             flag = 0;
                             new_cost = 0.0;
@@ -1432,28 +1534,28 @@ bool ProbabilisticInsertion(Solution &s, std::vector<std::vector<int>>& adjMatri
                                 station_insert_pos.clear();       
                                 r.temp_node_list = n_l;  
 
-                                s.idle[node2] = true;
-                                s.idle[data.optimal_staion[node1][node3][k]] = false;
+                                // s.idle[node2] = true;
+                                // s.idle[data.optimal_staion[node1][node3][k]] = false;
 
                                 if (sequential_station_insertion(flag, index_negtive_first, r, data, station_insert_pos, heuristic_cost, s)){
                                         for (int index=0; index<station_insert_pos.size(); index++){
                                             n_l.insert(n_l.begin()+ station_insert_pos[index].second, station_insert_pos[index].first); 
-                                            s.idle[station_insert_pos[index].first] = false;
+                                            // s.idle[station_insert_pos[index].first] = false;
                                         }  
                                         new_cost = heuristic_cost;
                                                     
                                 }
                                 else {
-                                    s.idle[node2] = false;
-                                    s.idle[data.optimal_staion[node1][node3][k]] = true;
+                                    // s.idle[node2] = false;
+                                    // s.idle[data.optimal_staion[node1][node3][k]] = true;
                                     break;
                                 } 
                             }      
                             if (new_cost-previous_cost<-PRECISION)  {
                                 //printf("%d, %d -> %d, %d: %.2lf\n",first_node,node2,data.optimal_staion[first_node][node3][k],node3, new_cost-pre_cost);
                                 heuristic_cost = new_cost;
-                                s.idle[node2] = true;
-                                s.idle[data.optimal_staion[node1][node3][k]] = false;
+                                // s.idle[node2] = true;
+                                // s.idle[data.optimal_staion[node1][node3][k]] = false;
                                 r.node_list = n_l;
                                 check = 1;
                                 break;

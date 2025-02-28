@@ -7,9 +7,95 @@
 // --------------------------------------------------------------------------
 //
 // cplex_solver.cpp -- CPLEX Solver
-// ILPmodel: Set-covering-based ILP Model for EVRP-TW-SPD
+// ILPSETCOVmodel: Set-covering-based ILP Model for EVRP-TW-SPD
 // --------------------------------------------------------------------------
 #include "cplex_solver.h"
+#include <ilconcert/iloenv.h>
+
+// set-covering-based ILP Model for EVRP-TW-SPD
+void ILPSETCOVmodel(Solution& s, double& t_solve, Data& data, double time_limit, Solution& tour_set){
+
+    s.cost = double(INFINITY);
+
+    IloEnv env;
+    IloInt numRoutes = data.cplex_data.numRoutes;
+    
+
+    try {
+        // Decision variables
+        IloModel model(env);
+
+        IloBoolVarArray x(env, numRoutes);
+
+        // Objective function
+        IloExpr totalCost(env);
+        for (IloInt i = 0; i < numRoutes; i++){
+            totalCost += data.cplex_data.transcost[i] * x[i] + data.cplex_data.u_2 * x[i];
+        }
+        model.add(IloMinimize(env, totalCost));
+        totalCost.end();
+
+        // Constraints
+        // ensure that each customer is visited at least once.
+        for (IloInt i = 0; i < data.cplex_data.numCustomers; i++) {
+            IloExpr customerConstraint(env);
+            for (IloInt j = 0; j < data.cplex_data.numSolutions; j++){
+                customerConstraint += x[data.cplex_data.routesIndex[j][i]];
+            }
+            model.add(customerConstraint >= 1);
+            customerConstraint.end();
+        }
+
+        // Solve the model
+        IloCplex cplex(model);
+
+        // cplex configuration:
+        cplex.setOut(env.getNullStream()); // Suppress output
+        // pass the time limit to CPLEX
+        cplex.setParam(IloCplex::Param::TimeLimit, time_limit); // Time limit in seconds
+        cplex.setParam(IloCplex::Param::Threads, 1); // Single thread
+        cplex.setParam(IloCplex::Param::MIP::Tolerances::AbsMIPGap, 0.001);
+
+        double start_time = cplex.getTime();
+
+        if (cplex.solve()) {
+            // Display solution for x[i][j]
+            // env.out() << "Solution (matrix):" << std::endl;
+            for (IloInt i = 0; i < numRoutes; i++) {
+                if (cplex.getValue(x[i]) > 0.5) {
+                    s.append(tour_set.get(i));
+                }
+            }
+
+            s.update(data);
+            s.cal_cost(data);
+
+            // Display results
+            env.out() << "Solution status: " << cplex.getStatus() << std::endl;
+            env.out() << "Total cost: " << cplex.getObjValue() << std::endl;
+
+        } else {
+            std::cout << "No solution found." << std::endl;
+        }
+
+        double end_time = cplex.getTime();
+        double elapsed_time = end_time - start_time;
+
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "Execution time: " << elapsed_time << " seconds" << std::endl;
+
+        t_solve = elapsed_time;
+        
+    } catch (IloException& e) {
+        env.out() << "Error: " << e.getMessage() << std::endl;
+    } catch (...) {
+        env.out() << "Unknown error" << std::endl;
+    }
+
+    env.end();
+}
+
+// assignment-type ILP Model for EVRP-TW-SPD
 void ILPmodel(Solution& s, double& t_solve, Data& data, double time_limit, const std::vector<std::vector<int>>& adjMatrix){
 
     s.cost = double(INFINITY);

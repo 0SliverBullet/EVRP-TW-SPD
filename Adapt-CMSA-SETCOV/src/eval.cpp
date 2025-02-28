@@ -425,7 +425,7 @@ bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<in
             //过滤掉那些不能走到充电站的点, 不能从同一个充电站走到自己
             //if (r.status_list[pos-1].dep_RD + PRECISION < data.dist[r.temp_node_list[pos-1]][i] ) {
             
-            if (s.idle[data.optimal_staion[nl[pos-1]][nl[pos]][j]]){
+            // if (s.idle[data.optimal_staion[nl[pos-1]][nl[pos]][j]]){
                 int node = data.optimal_staion[nl[pos-1]][nl[pos]][j];
                 if ((data.node[nl[pos-1]].type == 2 && ((nl[pos-1] - data.customer_num) % data.station_cardinality) == ((node -data.customer_num) % data.station_cardinality)) \
                 || (data.node[nl[pos]].type == 2 && ((nl[pos] - data.customer_num) % data.station_cardinality) == ((node - data.customer_num) % data.station_cardinality)) \
@@ -448,7 +448,7 @@ bool cal_score_station(bool type, std::vector<int> &feasible_pos, std::vector<in
                 //     update_route_status(route.temp_node_list, route.status_list, data, flag, cost, tmp_index_negtive_first); 
                 // }
                 else chk_nl_node_pos_O_n(r.temp_node_list, i, pos, data, flag, cost);  //检查capacity、time window、battery是否满足约束
-            }
+            // }
 
             if (flag == 1) {
                 feasible_pos[i*MAX_NODE_IN_ROUTE+pos] = 1;
@@ -576,7 +576,7 @@ bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r,
             // }
 
             station_insert_pos.push_back({node,pos});
-            s.idle[node] = false;
+            // s.idle[node] = false;
             r.temp_node_list.insert(r.temp_node_list.begin() + pos, node);
             flag = 0;
             new_cost = 0.0;
@@ -601,10 +601,10 @@ bool sequential_station_insertion(int &flag, int &index_negtive_first, Route &r,
             }
         }
 
-        for (int i = 0; i < station_insert_pos.size(); i++){  
-            int node = station_insert_pos[i].first;
-            s.idle[node] = true;
-        }   
+        // for (int i = 0; i < station_insert_pos.size(); i++){  
+        //     int node = station_insert_pos[i].first;
+        //     s.idle[node] = true;
+        // }   
         // 撤销 idle 标记   
 
         if (flag==1) {
@@ -838,11 +838,11 @@ bool eval_move(Solution &s, Move &m, Data &data, double &base_cost)
             r.temp_node_list = r.customer_list; // 交换后 node_list 含有充电站, customer_list 不含充电站
 
             // *** 暂时取下充电站 ***
-            for (int node: r.node_list){
-                if (data.node[node].type == 2){
-                    item.idle[node] = true;
-                }
-            }
+            // for (int node: r.node_list){
+            //     if (data.node[node].type == 2){
+            //         item.idle[node] = true;
+            //     }
+            // }
 
             int flag = 0;
             double cost = 0.0;
@@ -861,7 +861,7 @@ bool eval_move(Solution &s, Move &m, Data &data, double &base_cost)
                     // *** 再次放回充电站 ***
                     for (int i=0; i<station_insert_pos.size(); i++){
                         r.customer_list.insert(r.customer_list.begin()+ station_insert_pos[i].second, station_insert_pos[i].first); 
-                        item.idle[station_insert_pos[i].first] = false;
+                        // item.idle[station_insert_pos[i].first] = false;
                     }
                     item.get(j).node_list = r.customer_list; 
                     item.get(j).update(data);
