@@ -21,10 +21,13 @@ int active_threads = 0;
 //                           31,32,33,34,35,36,37,38,39,40,
 //                           41,42,43,44,45,46,47,48,49,50,
 //                           51,52,53,54,55};
-std::vector<int> cores = {0, 
-                            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+std::vector<int> cores = {5, 6, 7, 8, 9, 10,
                           11,12,13,14,15,16,17,18,19,20,
-                          21,22,23};
+                          21,22,23, 24, 25, 26, 27, 28};
+// std::vector<int> cores = {0, 
+//                             1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+//                           11,12,13,14,15,16,17,18,19,20,
+//                           21,22,23};
 // std::vector<int> cores = {         24,25,26,27,28,29,30,
 //                           31,32,33,34,35,36,37,38,39,40,
 //                           41,42,43,44,45,46,47          };
@@ -76,21 +79,22 @@ int main() {
     std::string baseCommand = "./build/evrp-tw-spd --problem ./data/jd_instances/";
 
     std::vector<std::tuple<std::string, std::string>> options_and_prefixes = {
-        // {" --pruning --output ./solution/v0.0.4/jd/small_timelimit/ --time 1800 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd200_"},
-        // {" --pruning --output ./solution/v0.0.4/jd/small_timelimit/ --time 5400 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd400_"},
-        // {" --pruning --output ./solution/v0.0.4/jd/small_timelimit/ --time 9000 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd600_"},
-        // {" --pruning --output ./solution/v0.0.4/jd/small_timelimit/ --time 12600 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd800_"},
-        // {" --pruning --output ./solution/v0.0.4/jd/small_timelimit/ --time 16200 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd1000_"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 3600 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd200_"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 10800 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd400_"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 18000 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd600_"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 25200 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd800_"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd1000_"},
+        // {" --pruning --output ./solution/v0.0.1/jd/small_timelimit/ --time 1800 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd200_"},
+        // {" --pruning --output ./solution/v0.0.1/jd/small_timelimit/ --time 5400 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd400_"},
+        // {" --pruning --output ./solution/v0.0.1/jd/small_timelimit/ --time 9000 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd600_"},
+        // {" --pruning --output ./solution/v0.0.1/jd/small_timelimit/ --time 12600 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd800_"},
+        // {" --pruning --output ./solution/v0.0.1/jd/small_timelimit/ --time 16200 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd1000_"},
+        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 3600 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd200_"},
+        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 10800 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd400_"},
+        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 18000 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd600_"},
+        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 25200 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd800_"},
+        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 32400 --runs 5 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd1000_"},
+        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 32400 --runs 5 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1 --random_seed 61", "jd1000_"},
     };
 
     std::vector<std::thread> threads;
 
-    add_to_threads(threads, baseCommand, options_and_prefixes, 1, 5);
+    add_to_threads(threads, baseCommand, options_and_prefixes, 1, 4);
 
     for (auto& th : threads) {
         if (th.joinable()) {
