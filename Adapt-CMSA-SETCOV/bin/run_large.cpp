@@ -88,8 +88,7 @@ int main() {
         {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 10800 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd400_"},
         {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 18000 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd600_"},
         {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 25200 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd800_"},
-        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 32400 --runs 5 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd1000_"},
-        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 32400 --runs 5 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1 --random_seed 61", "jd1000_"},
+        {" --pruning --output ./solution/v0.0.1/jd/large_timelimit/ --time 32400 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 1", "jd1000_"},
     };
 
     std::vector<std::thread> threads;

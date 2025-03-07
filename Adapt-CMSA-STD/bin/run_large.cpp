@@ -64,24 +64,24 @@ void execute_command(const std::string& command, int core_id) {
 
 
 void add_to_threads(std::vector<std::thread>& threads, const std::string& baseCommand, const std::vector<std::tuple<std::string, std::string>>& options_and_prefixes, int start, int end) {
-    // int option_index = 0;
-    // for (const auto& [options, prefix] : options_and_prefixes) {
-    //     for (int i = start; i <= end; ++i) {
-    //         std::string problemFile = prefix + std::to_string(i) + ".txt";
-    //         std::string command = baseCommand + problemFile + options;
-    //         int core_id = cores[(option_index * (end - start + 1) + (i - start)) % num_cores];
-    //         threads.emplace_back(execute_command, command, core_id);
-    //     }
-    //     option_index++;
-    // }
     int option_index = 0;
     for (const auto& [options, prefix] : options_and_prefixes) {
-            std::string problemFile = prefix +".txt";
+        for (int i = start; i <= end; ++i) {
+            std::string problemFile = prefix + std::to_string(i) + ".txt";
             std::string command = baseCommand + problemFile + options;
-            int core_id = cores[option_index % num_cores];
+            int core_id = cores[(option_index * (end - start + 1) + (i - start)) % num_cores];
             threads.emplace_back(execute_command, command, core_id);
-            option_index++;
+        }
+        option_index++;
     }
+    // int option_index = 0;
+    // for (const auto& [options, prefix] : options_and_prefixes) {
+    //         std::string problemFile = prefix +".txt";
+    //         std::string command = baseCommand + problemFile + options;
+    //         int core_id = cores[option_index % num_cores];
+    //         threads.emplace_back(execute_command, command, core_id);
+    //         option_index++;
+    // }
 }
 
 int main() {
@@ -96,28 +96,8 @@ int main() {
         // {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 3600 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd200_"},
         // {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 10800 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd400_"},
         // {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 18000 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd600_"},
-        // {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 25200 --runs 5 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd800_"},
-        // {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 5 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd1000_"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 56", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 57", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 58", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 59", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 60", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 61", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 62", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 63", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 64", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 65", "jd1000_3"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 56", "jd1000_4"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 57", "jd1000_4"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 58", "jd1000_4"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 59", "jd1000_4"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 60", "jd1000_4"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 61", "jd1000_4"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 62", "jd1000_4"},
-        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 63", "jd1000_4"},
-       {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 64", "jd1000_4"},
-       {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 1 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2 --random_seed 65", "jd1000_4"},
+        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 25200 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd800_"},
+        {" --pruning --output ./solution/v0.0.4/jd/large_timelimit/ --time 32400 --runs 10 --g_1 20 --O_1_eval --relocation 1 --swap --two_opt --exchange_1_1 1 --shift_1_0 1 --dummy_stations 2", "jd1000_"},
     };
 
     std::vector<std::thread> threads;
